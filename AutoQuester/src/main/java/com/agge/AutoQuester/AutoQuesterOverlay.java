@@ -55,8 +55,8 @@ public class AutoQuesterOverlay extends Overlay {
         panelComponent.getChildren().clear();
         slPanel.getChildren().clear();
 
-        //LineComponent started = buildLine(
-        //    "Started: ", String.valueOf(plugin.started));
+        LineComponent name = buildLine(
+            "Current instruction: ", plugin.getInstructionName());
         //LineComponent timeout = buildLine(
         //    "Timeout: ", String.valueOf(plugin.timeout));
         //LineComponent idleTicks = buildLine(
@@ -64,11 +64,11 @@ public class AutoQuesterOverlay extends Overlay {
         //LineComponent lootQ = buildLine(
         //    "Loot Q: ", String.valueOf(plugin.lootQueue.size()));
 
-        //panelComponent.getChildren().addAll(
-        //    Arrays.asList(started, timeout, idleTicks, lootQ));
-        //if (client.getLocalPlayer().getInteracting() != null) {
-        //    Actor intr = plugin.player.getInteracting();
-        //}
+        panelComponent.getChildren().addAll(
+            Arrays.asList(name));
+        if (client.getLocalPlayer().getInteracting() != null) {
+            Actor intr = plugin.player.getInteracting();
+        }
 
         return panelComponent.render(graphics);
     }

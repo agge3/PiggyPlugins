@@ -53,10 +53,19 @@ import com.example.EthanApiPlugin.Collections.Widgets;
 import com.agge.AutoQuester.Pathing;
 import com.agge.AutoQuester.Instructions;
 import com.agge.AutoQuester.Action;
+import com.agge.AutoQuester.Context;
+import com.agge.AutoQuester.Registry;
 import com.example.InteractionApi.NPCInteraction;
+import com.example.InteractionApi.ShopInteraction;
+import com.example.InteractionApi.InventoryInteraction;
+import com.example.InteractionApi.TileObjectInteraction;
 import com.example.PacketUtils.WidgetInfoExtended;
+import net.runelite.api.Client;
+import net.runelite.client.RuneLite;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.awt.event.KeyEvent;
 
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> AutoQuester</html>",
@@ -67,13 +76,17 @@ import java.util.*;
 
 @Slf4j
 public class AutoQuesterPlugin extends Plugin {
+    // static Client and ClientThread instances for the global namespace.
+    @Inject
+    public static Client client;
+    @Inject
+    public static ClientThread clientThread;
+
     @Inject
     public PlayerUtil playerUtil;
     @Inject
     public AutoQuesterHelper acHelper;
 
-    @Inject
-    private Client client;
     @Inject
     private AutoQuesterConfig config;
     @Inject
@@ -87,8 +100,6 @@ public class AutoQuesterPlugin extends Plugin {
     @Inject
     public ItemManager itemManager;
     @Inject
-    private ClientThread clientThread;
-    @Inject
     private Util util;
 
     @Provides
@@ -98,10 +109,11 @@ public class AutoQuesterPlugin extends Plugin {
 
     // Create null reference pointers for needed utilities.
     private Pathing pathing = null;
-    private Random random = null;
-    private Instructions instructions = null;
+    private Instructions _instructions = null;
     private Action action = null;
-    private Player player = null;
+    public Player player = null;
+    private Context ctx = null;
+    private Registry registry = null;
 
     // k, v for needed locations.
     private WorldPoint shopkeeper = new WorldPoint(3212, 3246, 0);
@@ -109,6 +121,7 @@ public class AutoQuesterPlugin extends Plugin {
  
     // Public instance variables.
     public static final int MAX_TIMEOUT = 2;
+    public static WorldPoint GOAL = null;
     public boolean started = false;
     public int timeout = 0;
 
@@ -123,12 +136,35 @@ public class AutoQuesterPlugin extends Plugin {
 
     private void init() {
         // Instantiate objects that need clean state.
-        random = new Random();
         pathing = new Pathing();
-        instructions = new Instructions();
+        _instructions = new Instructions();
         action = new Action(2);
+
+        log.debug("Pathing: " + pathing);
+        log.debug("Instructions: " + _instructions);
+        log.debug("Action: " + action);
+
+        if (pathing == null) {
+            log.error("Pathing is not initialized properly");
+            throw new IllegalStateException("Pathing is not initialized properly");
+        }
+        if (_instructions == null) {
+            log.error("Instructions is not initialized properly");
+            throw new IllegalStateException("Instructions is not initialized properly");
+        }
+        if (action == null) {
+            log.error("Action is not initialized properly");
+            throw new IllegalStateException("Action is not initialized properly");
+        }
+
+        // Package in Context for the Instructions Registry.
+        Context ctx = new Context(pathing, _instructions, action);
+        Registry registry = new Registry(ctx);
+
+        getInstanceVariables();
         
-        registerInstructions();
+        //registry.sheepShearer();
+        registry.cooksAssistant();
     }
 
     @Override  
@@ -140,16 +176,41 @@ public class AutoQuesterPlugin extends Plugin {
         resetEverything();
     }
 
+    /**
+     * Get the current instruction's name.
+     * @return String, the current instruction's name or no instructions
+     * @note Don't allow direct access to _instructions, return a new 
+     * String object.
+     */
+    public String getInstructionName()
+    {
+        if (_instructions.getSize() == 0)
+            return "No instructions!";
+        return _instructions.getName();
+    }
+
     public void resetEverything() {
         // Release resources for everything and hope garbage collector claims 
         // them.
-        random = null;
         pathing = null;
         action = null;
         player = null;
         // Instructions should be cleared. @see class Instructions
-        instructions.clear();
-        instructions = null;
+        _instructions.clear();
+        _instructions = null;
+        // SAFE to release Context and Registry.
+        ctx = null;
+        registry = null;
+    }
+
+    private void getInstanceVariables()
+    {   
+        try {
+            client = RuneLite.getInjector().getInstance(Client.class);
+            player = client.getLocalPlayer();
+        } catch (NullPointerException e) {
+            log.info("Error: Unable to get instance variables");
+        }
     }
 
     // Wrapper to return boolean for player.getAnimation()
@@ -158,71 +219,14 @@ public class AutoQuesterPlugin extends Plugin {
     //        return true;
     //    return false;
     //}
-
-    // Register all the instructions, these will return TRUE when they should 
-    // be removed. Then move on to the next instruction.
-    private void registerInstructions() {
-        // Random between 2 and 4 (inclusive).
-        int shortCont = 2 + random.nextInt(3);
-        // Random between 3 and 6 (inclusive).
-        int medCont = 3 + random.nextInt(4);   
-        // Random between 7 and 12 (inclusive).
-        int longCont = 7 + random.nextInt(6);  
-
-        instructions.register(() -> pathing.pathTo(veos),
-                Optional.empty());
-
-        instructions.register(() -> pathing.isPathing(),
-                Optional.empty());
-
-        // Full Veos dialogue.
-        instructions.register(() -> action.interactWith("Veos", "Talk-to"),
-                Optional.empty());
-
-        instructions.register(() -> action.continueDialogue(), 
-                Optional.of(shortCont));  
-
-        instructions.register(() -> action.selectDialogue(
-            "I'm looking for a quest.", 2),
-                Optional.empty());
-
-        instructions.register(() -> action.continueDialogue(), 
-                Optional.of(longCont));
-
-        instructions.register(() -> action.selectDialogue(
-            "Yes.", 1), 
-                Optional.empty());
-
-        instructions.register(() -> action.continueDialogue(), 
-                Optional.of(medCont));
-
-        //instructions.register(() -> action.selectDialogue("Yes.", 1),
-        //        Optional.empty());
-
-        //instructions.register(() -> action.continueDialogue(), 
-        //        Optional.of(shortCont));
-
-        instructions.register(() -> action.selectDialogue(
-            "Okay, thanks Veos.", 1), 
-                Optional.empty()); 
-
-        instructions.register(() -> action.continueDialogue(), 
-                Optional.of(medCont));
-
-        instructions.register(() -> pathing.pathTo(
-            new WorldPoint(3190, 3273,0)),
-                Optional.empty());
-        
-        instructions.register(() -> pathing.isPathing(),
-                Optional.empty());
-    }
    
     @Subscribe
     private void onGameTick(GameTick event) {
-        log.info("Idle ticks: " + action.getTimeout());
-        log.info("Curr idx: " + instructions.getCurrIdx());
-        log.info("Size: " + instructions.getSize());
-        instructions.executeInstructions();
+        log.info("Idle ticks: " + action.getTicks());
+        log.info("Curr idx: " + _instructions.getIdx());
+        log.info("Size: " + _instructions.getSize());
+        log.info("Curr WorldPoint: " + player.getWorldLocation()); 
+        _instructions.executeInstructions();
         pathing.run();
     }
 
@@ -285,4 +289,21 @@ public class AutoQuesterPlugin extends Plugin {
         }
         started = !started;
     }
+
+    // A better solution would be to use Widget packets, but if it's only SPACE...
+    private boolean pressSpace() 
+    {
+        KeyEvent keyPress = new KeyEvent(client.getCanvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+        client.getCanvas().dispatchEvent(keyPress);
+        KeyEvent keyRelease = new KeyEvent(client.getCanvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+        client.getCanvas().dispatchEvent(keyRelease);
+        KeyEvent keyTyped = new KeyEvent(client.getCanvas(), KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+        client.getCanvas().dispatchEvent(keyTyped);
+        return true;
+    }
+    //private boolean pressSpace() 
+    //{
+    //    Executors.newSingleThreadExecutor().submit(pressKey());
+    //    return true;
+    //}
 }

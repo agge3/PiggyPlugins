@@ -28,14 +28,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.Vector;
+import java.util.ArrayList;
 
 @Slf4j
 public class Instructions {
     public Instructions()
     {
-        log.info("Constructing Instructions!");
-        this.instructions = new Vector<BooleanSupplier>();
-        this.currIdx = 0;
+        _instructions = new ArrayList<>();
+        _names = new ArrayList<>();
+        //_goals = new ArrayList<>();
+        _idx = 0;
     }
 
     /**
@@ -44,9 +46,9 @@ public class Instructions {
      */
     public boolean execute()
     {
-        if (currIdx < instructions.size() && 
-            instructions.get(currIdx).getAsBoolean()) {
-            instructions.remove(currIdx);
+        if (_idx < _instructions.size() && 
+            _instructions.get(_idx).getAsBoolean()) {
+            _instructions.remove(_idx);
             // Do not increment currIdx since the current index is now pointing 
             // to the next instruction.
             return true;
@@ -64,7 +66,7 @@ public class Instructions {
         boolean executed = execute();
         // Check if there are more instructions left after executing the current 
         // one.
-        return executed && currIdx >= instructions.size();
+        return executed && _idx >= _instructions.size();
     }
 
     /**
@@ -72,18 +74,37 @@ public class Instructions {
      * @param BooleanSupplier instruction
      * A functional boolean instruction.
      * TRUE if instruction has executed, FALSE if still executing
+     * @param String name
+     * Provide a human-readable name for the instruction.
      * @param Optional<Integer> n
      * Add n instructions. RECOMMENDED: Seed Random.
      */
-    public void register(BooleanSupplier instruction, Optional<Integer> n) 
+    public void register(BooleanSupplier instruction, String name, 
+            Optional<Integer> n) 
     {
         if (!n.isPresent()) {
-            this.instructions.add(instruction);
+            _instructions.add(instruction);
+            _names.add(name);
         } else {
             for (int i = 0; i < n.get(); i++) {
-                this.instructions.add(instruction);
+                _instructions.add(instruction);
+                _names.add(name);
             }
         }
+    }
+
+    /**
+     * Register instructions into this instance's instruction vector.
+     * @param BooleanSupplier instruction
+     * A functional boolean instruction.
+     * TRUE if instruction has executed, FALSE if still executing
+     * @param String name
+     * Provide a human-readable name for the instruction.
+     */
+    public void register(BooleanSupplier instruction, String name) 
+    {
+        _instructions.add(instruction);
+        _names.add(name);
     }
 
     /**
@@ -92,16 +113,16 @@ public class Instructions {
      */
     public int getSize() 
     {
-        return instructions.size();
+        return _instructions.size();
     }
 
     /**
-     * Returns the current index of the executing instruction.
+     * Get the index of the executing instruction.
      * @return The current index
      */
-    public int getCurrIdx() 
+    public int getIdx() 
     {
-        return currIdx;
+        return _idx;
     }
 
     /**
@@ -109,10 +130,35 @@ public class Instructions {
      */
     public void clear() 
     {
-        instructions.clear();
-        currIdx = 0; // Reset the current index
+        _instructions.clear();
+        _names.clear();
+        _idx = 0; // Reset index.
     }
 
-    private Vector<BooleanSupplier> instructions;
-    private int currIdx;
+    /**
+     * Get a human-readable name for the current instruction.
+     * @return String instruction
+     * The instruction's human-readable name.
+     */
+    public String getName()
+    {
+        return _names.get(_idx);
+    }
+
+    /**
+     * Get the current instruction's WorldPoint goal.
+     * @return WorldPoint wp
+     * The instruction's WorldPoint goal.
+     * @todo UNIMPLEMENTED, requires changing the interface. Using a static 
+     * global instead.
+     */
+    //public WorldPoint getGoal()
+    //{
+    //    return _goals.get(_idx);
+    //}
+
+    private List<BooleanSupplier> _instructions;
+    private List<String> _names; 
+    //private List<WorldPoint> _goals;
+    private int _idx;
 }

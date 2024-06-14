@@ -44,56 +44,58 @@ public class AutoQuesterTileOverlay extends Overlay {
 
     }
 
+    // XXX THIS IS ALL BROKEN
     @Override
     public Dimension render(Graphics2D graphics) {
-    //    if (plugin.lootTile != null) {
-    //        renderTile(graphics, plugin.lootTile, 
+    //    if (plugin.GOAL != null) {
+    //        // xxx -1 (?), no idea if this will work
+    //        LocalPoint lp = LocalPoint.fromWorld(-1, plugin.GOAL);
+    //        renderTile(graphics, lp, 
     //                Color.RED, 1.0, new Color(255, 255, 255, 20));
-    //        renderTextLocation(graphics, "Loot", 
-    //                WorldPoint.fromLocalInstance(client, plugin.lootTile),
+    //        renderTextLocation(graphics, "Goal", 
+    //                WorldPoint.fromLocalInstance(client, plugin.GOAL),
     //                Color.RED);
     //    }
 
         return null;
     }
 
-    /**
-     * Builds a line component with the given left and right text
-     *
-     * @param left
-     * @param right
-     * @return Returns a built line component with White left text and Yellow right text
-     */
-    private LineComponent buildLine(String left, String right) {
-        return LineComponent.builder()
-                .left(left)
-                .right(right)
-                .leftColor(Color.WHITE)
-                .rightColor(Color.YELLOW)
-                .build();
-    }
+    ///**
+    // * Builds a line component with the given left and right text
+    // *
+    // * @param left
+    // * @param right
+    // * @return Returns a built line component with White left text and Yellow right text
+    // */
+    //private LineComponent buildLine(String left, String right) {
+    //    return LineComponent.builder()
+    //            .left(left)
+    //            .right(right)
+    //            .leftColor(Color.WHITE)
+    //            .rightColor(Color.YELLOW)
+    //            .build();
+    //}
 
-    private void renderTile(Graphics2D graphics, LocalPoint dest, Color color, 
-            double borderWidth, Color fillColor) {
-        if (dest != null) {
-            Polygon poly = Perspective.getCanvasTilePoly(this.client, dest);
-            if (poly != null) {
-                OverlayUtil.renderPolygon(graphics, poly, color, fillColor, 
-                        new BasicStroke((float) borderWidth));
-            }
-        }
-    }
+    //private void renderTile(Graphics2D graphics, LocalPoint dest, Color color, 
+    //        double borderWidth, Color fillColor) {
+    //    if (dest != null) {
+    //        Polygon poly = Perspective.getCanvasTilePoly(this.client, dest);
+    //        if (poly != null) {
+    //            OverlayUtil.renderPolygon(graphics, poly, color, fillColor, 
+    //                    new BasicStroke((float) borderWidth));
+    //        }
+    //    }
+    //}
 
-    private void renderTextLocation(Graphics2D graphics, String text, 
-            WorldPoint worldPoint, Color color) {
-        LocalPoint point = LocalPoint.fromWorld(client, worldPoint);
-        if (point == null) {
-            return;
-        }
-        Point textLocation = Perspective.getCanvasTextLocation(
-            client, graphics, point, text, 0);
-        if (textLocation != null) {
-            OverlayUtil.renderTextLocation(graphics, textLocation, text, color);
-        }
-    }
+    //private void renderTextLocation(Graphics2D graphics, String text, 
+    //        LocalPoint lp, Color color) {
+    //    if (lp == null) {
+    //        return;
+    //    }
+    //    Point textLocation = Perspective.getCanvasTextLocation(
+    //        client, graphics, lp, text, 0);
+    //    if (textLocation != null) {
+    //        OverlayUtil.renderTextLocation(graphics, textLocation, text, color);
+    //    }
+    //}
 }

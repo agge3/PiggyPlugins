@@ -52,19 +52,23 @@ import net.runelite.api.widgets.Widget;
 import com.example.EthanApiPlugin.Collections.Widgets;
 import com.agge.AutoQuester.Pathing;
 import com.example.InteractionApi.NPCInteraction;
+import com.example.InteractionApi.ShopInteraction;
 import com.example.PacketUtils.WidgetInfoExtended;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class Action {
     public Action(int max)  
     {
         log.info("Constructing Action!");
-        this.max = max;
-        this.timeout = 0;
+        this._max = max;
+        this._ticks = 0;
     }
 
     public boolean continueDialogue() {
@@ -74,7 +78,7 @@ public class Action {
          if (mainContinueOpt.isPresent()) {
              MousePackets.queueClickPacket();
              WidgetPackets.queueResumePause(mainContinueOpt.get().getId(), -1);
-             timeout = 0;
+             _ticks = 0;
              return true;
          }
 
@@ -96,11 +100,11 @@ public class Action {
          //    return true;
          //}
 
-         if (timeout > 1) {
-             timeout = 0;
+         if (_ticks > 1) {
+             _ticks = 0;
              return true;
          }
-         timeout++;
+         _ticks++;
          return false;
     }
 
@@ -112,7 +116,7 @@ public class Action {
          if (d.isPresent()) {
              MousePackets.queueClickPacket();
              WidgetPackets.queueResumePause(d.get().getId(), choice);
-             timeout = 0;
+             _ticks = 0;
              return true;
          }
 
@@ -126,10 +130,11 @@ public class Action {
          return false;
     }
 
-    public boolean interactWith(String name, String action) {
+    public boolean interactNPC(String name, String action) 
+    {
          log.info("Interacting with");
          if (NPCInteraction.interact(name, action)) {
-             timeout = 0;
+             _ticks = 0;
              return true;
          }
 
@@ -142,11 +147,101 @@ public class Action {
          return false;
     }
 
-    public int getTimeout()
+    //public boolean interactMenu()
+    //{
+    //    Widget menu = plugin.getClient().getWidget(
+    //    MousePackets.queueClickPacket();
+    //    //interactWidget not implemented yet
+    //    WidgetPackets.queueWidgetAction(plugin.getClient().getWidget(
+    //        config.item().getWidgetInfo().getPackedId()), "Smith", "Smith set");
+
+    public boolean buyN(String name, int n)
     {
-        return this.timeout;
+        log.info("Interacting with");
+        if (n == 1) {
+            return ShopInteraction.buyOne(name);
+        }
+        return false;
     }
     
-    private int max;
-    private int timeout;
+    // A better solution would be to use Widget packets, but if it's only SPACE...
+    public boolean pressSpace() 
+    {
+        try {
+            KeyEvent keyPress = new KeyEvent(AutoQuesterPlugin.client.getCanvas(), 
+                    KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, 
+                    KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+            AutoQuesterPlugin.client.getCanvas().dispatchEvent(keyPress);
+            KeyEvent keyRelease = new KeyEvent(AutoQuesterPlugin.client.getCanvas(), 
+                KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, 
+                KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+            AutoQuesterPlugin.client.getCanvas().dispatchEvent(keyRelease);
+            KeyEvent keyTyped = new KeyEvent(AutoQuesterPlugin.client.getCanvas(), 
+                KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, 
+                KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
+            AutoQuesterPlugin.client.getCanvas().dispatchEvent(keyTyped);
+            return true;
+        } catch (IllegalArgumentException e) {
+            // Ignore the exception, SPACE executes fine.
+            return true;
+        }
+    }
+
+    public boolean interactTileItem(String name, int actionNo)
+    {
+        log.info("Trying to interact with: " + name + " " + actionNo);
+        AtomicBoolean found = new AtomicBoolean(false);
+        TileItems.search()
+                 .withName(name)
+                 .withinDistance(10) // Assumed to be close.
+                 .first().ifPresent(item -> { 
+            MousePackets.queueClickPacket();
+            TileItemPackets.queueTileItemAction(
+                actionNo, item.getTileItem().getId(),
+                item.getLocation().getX(), item.getLocation().getY(), false);
+            log.info("Interacted with: " + name);
+            found.set(true); });
+        return found.get();
+    }
+
+    /**
+     * Block next instruction.
+     * @param int ticks
+     * How many ticks to block for.
+     * @return TRUE when done blocking
+     */
+    public boolean block(int ticks)
+    {
+        log.info("Blocking next action!");
+        this._ticks++;
+        log.info("Ticks: " + this._ticks);
+        if (this._ticks > ticks) {
+            this._ticks = 0;
+            return true;
+        }
+        return false;
+    }   
+
+    public void setMax(int max)
+    {
+        this._max = max;
+    }
+
+    public int getMax()
+    {
+        return this._max;
+    }
+
+    public int getTicks()
+    {
+        return this._ticks;
+    }
+
+    public boolean timeout(int n)
+    {
+        return this._ticks > n;
+    }
+    
+    private int _max;
+    private int _ticks;
 }

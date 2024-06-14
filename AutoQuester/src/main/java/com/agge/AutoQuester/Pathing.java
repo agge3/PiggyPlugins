@@ -29,6 +29,12 @@ import java.util.Random;
 
 @Slf4j
 public class Pathing {
+    public Pathing()
+    {
+        _ticks = 0;
+        _isDoored = false;
+    }
+
     static List<WorldPoint> path = new ArrayList<>();
     static List<WorldPoint> fullPath = new ArrayList<>();
     static WorldPoint currentPathDestination = null;
@@ -71,22 +77,48 @@ public class Pathing {
     //    return goal != null;
     //}
 
-    public boolean pathTo(WorldPoint goal){
-        log.info("Path to: " + goal);
-        currentPathDestination = null;
-        path = GlobalCollisionMap.findPath(goal);
-        fullPath = new ArrayList<>(path);
-        Pathing.goal = goal;
-        currentPathDestination = null;
-        if(path == null){
-            return false;
+    public boolean pathTo(WorldPoint goal) {
+        try {
+            log.info("Path to: " + goal);
+            currentPathDestination = null;
+            path = GlobalCollisionMap.findPath(goal);
+            fullPath = new ArrayList<>(path);
+            Pathing.goal = goal;
+            currentPathDestination = null;
+            if(path == null){
+                return false;
+            }
+            return true;
+        // xxx hack fix for now, just keeping scanning for valid WorldPoint
+        } catch (NullPointerException e) {
+            log.info("Caught exception with that path!");
+            log.info("Repathing to offset...");
+
+            int x = goal.getX();
+            int y = goal.getY();
+
+            goal = new WorldPoint(x - 1, y - 1, 0);
+            log.info("Path to: " + goal);
+            currentPathDestination = null;
+            path = GlobalCollisionMap.findPath(goal);
+            fullPath = new ArrayList<>(path);
+            Pathing.goal = goal;
+            currentPathDestination = null;
+            if(path == null){
+                return false;
+            }
+            return true;
         }
-        return true;
     }
 
     public boolean isPathing() {
         log.info("Is pathing...");
         return goal != null && goal.equals(EthanApiPlugin.playerPosition());
+    }
+
+    public boolean timeout(int n)
+    {
+        return true;
     }
 
 //    @Subscribe
@@ -122,16 +154,18 @@ public class Pathing {
 //    }
 
     public void run() {
+        _ticks++;
         if(goal!=null&&goal.equals(EthanApiPlugin.playerPosition())){
             log.info("Pathing: Reached goal");
             goal = null;
             path = null;
             currentPathDestination = null;
+            _ticks = 0; // Arrived, reset tick counter.
             return;
         }
         if (path != null && path.size() >= 1) {
             if(currentPathDestination !=null&&!currentPathDestination.equals(EthanApiPlugin.playerPosition())&&!EthanApiPlugin.isMoving()){
-                System.out.println("stopped walking. clicking destination again");
+                log.info("stopped walking. clicking destination again");
                 MousePackets.queueClickPacket();
                 MovementPackets.queueMovement(currentPathDestination);
             }
@@ -146,8 +180,8 @@ public class Pathing {
                         }
                     }
                 }
-                if(isDoored(EthanApiPlugin.playerPosition(), path.get(0))){
-                    System.out.println("doored");
+                if (isDoored(EthanApiPlugin.playerPosition(), path.get(0))) {
+                    log.info("Door!");
                     WallObject wallObject = getTile(EthanApiPlugin.playerPosition()).getWallObject();
                     if(wallObject == null){
                         wallObject = getTile(path.get(0)).getWallObject();
@@ -178,6 +212,7 @@ public class Pathing {
         if (tA == null || tB == null) {
             return false;
         }
+        _isDoored = true;
         return isDoored(tA, tB);
     }
 
@@ -186,6 +221,7 @@ public class Pathing {
         if (wallObject != null) {
             ObjectComposition objectComposition = EthanApiPlugin.getClient().getObjectDefinition(wallObject.getId());
             if (objectComposition == null) {
+                _isDoored = false;
                 return false;
             }
             boolean found = false;
@@ -196,38 +232,45 @@ public class Pathing {
                 }
             }
             if (!found) {
+                _isDoored = false;
                 return false;
             }
             int orientation = wallObject.getOrientationA();
             if (orientation == 1) {
                 //blocks west
                 if (a.getWorldLocation().dx(-1).equals(b.getWorldLocation())) {
+                    _isDoored = true;
                     return true;
                 }
             }
             if (orientation == 4) {
                 //blocks east
                 if (a.getWorldLocation().dx(+1).equals(b.getWorldLocation())) {
+                    _isDoored = true;
                     return true;
                 }
             }
             if (orientation == 2) {
                 //blocks north
                 if (a.getWorldLocation().dy(1).equals(b.getWorldLocation())) {
+                    _isDoored = true;
                     return true;
                 }
             }
             if (orientation == 8) {
                 //blocks south
+                _isDoored = true;
                 return a.getWorldLocation().dy(-1).equals(b.getWorldLocation());
             }
         }
         WallObject wallObjectb = b.getWallObject();
         if (wallObjectb == null) {
+            _isDoored = false;
             return false;
         }
         ObjectComposition objectCompositionb = EthanApiPlugin.getClient().getObjectDefinition(wallObjectb.getId());
         if (objectCompositionb == null) {
+            _isDoored = false;
             return false;
         }
         boolean foundb = false;
@@ -238,31 +281,37 @@ public class Pathing {
             }
         }
         if (!foundb) {
+            _isDoored = false;
             return false;
         }
         int orientationb = wallObjectb.getOrientationA();
         if (orientationb == 1) {
             //blocks east
             if (b.getWorldLocation().dx(-1).equals(a.getWorldLocation())) {
+                _isDoored = true;
                 return true;
             }
         }
         if (orientationb == 4) {
             //blocks south
             if (b.getWorldLocation().dx(+1).equals(a.getWorldLocation())) {
+                _isDoored = true;
                 return true;
             }
         }
         if (orientationb == 2) {
             //blocks south
             if (b.getWorldLocation().dy(+1).equals(a.getWorldLocation())) {
+                _isDoored = true;
                 return true;
             }
         }
         if (orientationb == 8) {
             //blocks north
+            _isDoored = true;
             return b.getWorldLocation().dy(-1).equals(a.getWorldLocation());
         }
+        _isDoored = false;
         return false;
     }
 
@@ -273,4 +322,18 @@ public class Pathing {
         }
         return EthanApiPlugin.getClient().getScene().getTiles()[point.getPlane()][a.getSceneX()][a.getSceneY()];
     }
+
+    private boolean notMoving()
+    {
+        if (currentPathDestination != null && 
+            !currentPathDestination.equals(EthanApiPlugin.playerPosition())
+            && !EthanApiPlugin.isMoving()) {
+            _ticks++;
+            return true;
+        }
+        return false;
+    }
+
+    private int _ticks;
+    private boolean _isDoored;
 }
