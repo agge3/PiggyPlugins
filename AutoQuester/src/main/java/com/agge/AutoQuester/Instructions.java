@@ -146,6 +146,17 @@ public class Instructions {
     }
 
     /**
+     * Skip the current instruction.
+     * @note Useful if stuck/broken.
+     * @warning Is a destructive procedure! Can't be undone!
+     */
+    public boolean skip()
+    {
+        _instructions.remove(_idx);
+        return true;
+    }
+
+    /**
      * Get the current instruction's WorldPoint goal.
      * @return WorldPoint wp
      * The instruction's WorldPoint goal.

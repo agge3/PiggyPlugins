@@ -1,3 +1,16 @@
+/**
+ * @file Pathing.java
+ * @class Pathing
+ * Pathing - Heavily borrowed and adapted from EthanApi.
+ *
+ * @author agge3
+ * @version 1.0
+ * @since 2024-06-15
+ *
+ * Special thanks to EthanApi and PiggyPlugins for API, inspiration, and a 
+ * source of code at times.
+ */
+
 package com.agge.AutoQuester;
 
 import com.example.EthanApiPlugin.Collections.TileObjects;
@@ -6,8 +19,7 @@ import com.example.EthanApiPlugin.PathFinding.GlobalCollisionMap;
 import com.example.Packets.MousePackets;
 import com.example.Packets.MovementPackets;
 import com.example.Packets.ObjectPackets;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
+
 import net.runelite.api.ObjectComposition;
 import net.runelite.api.Tile;
 import net.runelite.api.WallObject;
@@ -21,6 +33,9 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+
+import com.google.inject.Inject;
+import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

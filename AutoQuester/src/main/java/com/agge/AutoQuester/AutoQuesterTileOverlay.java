@@ -14,7 +14,7 @@
 package com.agge.AutoQuester;
 
 import com.example.EthanApiPlugin.Collections.TileObjects;
-import com.google.common.base.Strings;
+
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
@@ -22,6 +22,8 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
+
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;

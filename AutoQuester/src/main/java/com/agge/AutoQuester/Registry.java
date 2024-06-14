@@ -15,59 +15,32 @@
 
 package com.agge.AutoQuester;
 
-import com.example.EthanApiPlugin.Collections.ETileItem;
-import com.example.EthanApiPlugin.Collections.Inventory;
-import com.example.EthanApiPlugin.Collections.NPCs;
-import com.example.EthanApiPlugin.Collections.TileItems;
-import com.example.EthanApiPlugin.Collections.query.TileItemQuery;
-import com.example.EthanApiPlugin.EthanApiPlugin;
-import com.example.InteractionApi.InventoryInteraction;
-import com.example.Packets.*;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.piggyplugins.PiggyUtils.API.PlayerUtil;
-import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
-import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.events.*;
-import net.runelite.client.callback.ClientThread;
-import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.events.NpcLootReceived;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.ItemStack;
-import net.runelite.client.input.KeyManager;
-import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.util.HotkeyListener;
-import static net.runelite.api.TileItem.OWNERSHIP_SELF;
-import static net.runelite.api.TileItem.OWNERSHIP_GROUP;
-import com.agge.AutoQuester.AutoQuesterConfig;
-import com.agge.AutoQuester.AutoQuesterOverlay;
-import com.agge.AutoQuester.AutoQuesterTileOverlay;
 import com.agge.AutoQuester.Util;
 import com.agge.AutoQuester.IntPtr;
-import net.runelite.api.widgets.Widget;
-import com.example.EthanApiPlugin.Collections.Widgets;
 import com.agge.AutoQuester.Pathing;
 import com.agge.AutoQuester.Instructions;
 import com.agge.AutoQuester.Action;
+import com.agge.AutoQuester.Context;
+
+import com.piggyplugins.PiggyUtils.API.PlayerUtil;
 import com.example.InteractionApi.NPCInteraction;
 import com.example.InteractionApi.ShopInteraction;
 import com.example.InteractionApi.InventoryInteraction;
 import com.example.InteractionApi.TileObjectInteraction;
-import com.example.PacketUtils.WidgetInfoExtended;
+
+import net.runelite.api.*;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.Client;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.NpcID;
 import net.runelite.api.ObjectID;
 
+import com.example.Packets.*;
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.awt.event.KeyEvent;
 import java.util.function.BooleanSupplier;
 
 @Slf4j
@@ -109,17 +82,20 @@ public class Registry {
 
     public void xMarksTheSpot() 
     {
-        path(3228, 3242);
-
-        // Full Veos dialogue.
-        talk("Veos");
-        cshort();
-        dialogue("I'm looking for a quest.", 2);
-        clong();
-        dialogue("Yes", 1);
-        cmed();
-        dialogue("Okay, thanks Veos.", 1);
-        cmed();
+        if (!AutoQuesterPlugin.config.startedXMarksTheSpot()) {
+            // Starting the quest.
+            path(3228, 3242);
+            
+            // Full Veos dialogue.
+            talk("Veos");
+            cshort();
+            dialogue("I'm looking for a quest.", 2);
+            clong();
+            dialogue("Yes", 1);
+            cmed();
+            dialogue("Okay, thanks Veos.", 1);
+            cmed();
+        }
 
         // Shop keeper
         path(3112, 3246);
@@ -156,6 +132,9 @@ public class Registry {
 
     public void sheepShearer()
     {
+        // xxx handle if it's started already or not
+        //if (AutoQuesterPlugin.getConfig.starterSheepShearer()) {
+
         // Fred the Farmer, pickup shears
         path(new WorldPoint(3190, 3273, 0));
         interact("Shears", TAKE, TILE_ITEM);
@@ -208,27 +187,29 @@ public class Registry {
 
     public void cooksAssistant()
     {
-        //if (!AutoQuesterConfig.startedCooksAssistant) {
+        // Not a good way to avoid pathing here, whether it's started or not...
         path(new WorldPoint(3208, 3216, 0));
-        talk("Cook");
-        register(() -> this._action.continueDialogue(), null);
-        register(() -> this._action.selectDialogue(
-            "You don't look very happy.", 3), null);
-        register(() -> this._action.continueDialogue(), shortCont);
-        register(() -> this._action.selectDialogue(
-            "What's wrong?", 1), null);
-        register(() -> this._action.continueDialogue(), medCont);
-        dialogue("Yes", 1);
-        cshort();
-        dialogue("Actually, I know where to find this stuff", 4);
-        cont();
+
+        if (!AutoQuesterPlugin.config.startedCooksAssistant()) {
+            talk("Cook");
+            register(() -> this._action.continueDialogue(), null);
+            register(() -> this._action.selectDialogue(
+                "You don't look very happy.", 3), null);
+            register(() -> this._action.continueDialogue(), shortCont);
+            register(() -> this._action.selectDialogue(
+                "What's wrong?", 1), null);
+            register(() -> this._action.continueDialogue(), medCont);
+            dialogue("Yes", 1);
+            cshort();
+            dialogue("Actually, I know where to find this stuff", 4);
+            cont();
+        }
+
         interact("Pot", TAKE, TILE_ITEM);
-        block(minWait);
-        debug();
+        block(longCont);
         // Trapdoor ID = 14880
         interact(String.valueOf(14880), "Climb-down", TILE_OBJECT);
-        block(medCont);
-        debug();
+        block(longCont);
         register(() -> this._action.interactTileItem(
             "Bucket", Integer.valueOf(TAKE)), null);
         register(() -> this._action.block(shortWait), null);
@@ -462,5 +443,4 @@ public class Registry {
     private Pathing _pathing;
     private Instructions _instructions;
     private Action _action;
-
 }

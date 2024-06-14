@@ -13,6 +13,19 @@
 
 package com.agge.AutoQuester;
 
+import com.agge.AutoQuester.AutoQuesterConfig;
+import com.agge.AutoQuester.AutoQuesterOverlay;
+import com.agge.AutoQuester.AutoQuesterTileOverlay;
+import com.agge.AutoQuester.Util;
+import com.agge.AutoQuester.IntPtr;
+import com.agge.AutoQuester.Pathing;
+import com.agge.AutoQuester.Instructions;
+import com.agge.AutoQuester.Action;
+import com.agge.AutoQuester.Context;
+import com.agge.AutoQuester.Registry;
+
+import com.piggyplugins.PiggyUtils.API.PlayerUtil;
+import com.example.Packets.*;
 import com.example.EthanApiPlugin.Collections.ETileItem;
 import com.example.EthanApiPlugin.Collections.Inventory;
 import com.example.EthanApiPlugin.Collections.NPCs;
@@ -20,11 +33,13 @@ import com.example.EthanApiPlugin.Collections.TileItems;
 import com.example.EthanApiPlugin.Collections.query.TileItemQuery;
 import com.example.EthanApiPlugin.EthanApiPlugin;
 import com.example.InteractionApi.InventoryInteraction;
-import com.example.Packets.*;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.piggyplugins.PiggyUtils.API.PlayerUtil;
-import lombok.extern.slf4j.Slf4j;
+import com.example.EthanApiPlugin.Collections.Widgets;
+import com.example.InteractionApi.NPCInteraction;
+import com.example.InteractionApi.ShopInteraction;
+import com.example.InteractionApi.InventoryInteraction;
+import com.example.InteractionApi.TileObjectInteraction;
+import com.example.PacketUtils.WidgetInfoExtended;
+
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.coords.LocalPoint;
@@ -41,54 +56,38 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.HotkeyListener;
-import static net.runelite.api.TileItem.OWNERSHIP_SELF;
-import static net.runelite.api.TileItem.OWNERSHIP_GROUP;
-import com.agge.AutoQuester.AutoQuesterConfig;
-import com.agge.AutoQuester.AutoQuesterOverlay;
-import com.agge.AutoQuester.AutoQuesterTileOverlay;
-import com.agge.AutoQuester.Util;
-import com.agge.AutoQuester.IntPtr;
 import net.runelite.api.widgets.Widget;
-import com.example.EthanApiPlugin.Collections.Widgets;
-import com.agge.AutoQuester.Pathing;
-import com.agge.AutoQuester.Instructions;
-import com.agge.AutoQuester.Action;
-import com.agge.AutoQuester.Context;
-import com.agge.AutoQuester.Registry;
-import com.example.InteractionApi.NPCInteraction;
-import com.example.InteractionApi.ShopInteraction;
-import com.example.InteractionApi.InventoryInteraction;
-import com.example.InteractionApi.TileObjectInteraction;
-import com.example.PacketUtils.WidgetInfoExtended;
 import net.runelite.api.Client;
 import net.runelite.client.RuneLite;
 
+import com.google.inject.Inject;
+import com.google.inject.Provides;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.awt.event.KeyEvent;
 
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> AutoQuester</html>",
-        description = "AutoQuest for 10 quest points!",
+        description = "AutoQuest for easy quest points!",
         enabledByDefault = false,
         tags = {"agge", "piggy", "plugin"}
 )
 
 @Slf4j
 public class AutoQuesterPlugin extends Plugin {
-    // static Client and ClientThread instances for the global namespace.
+    // Static instances for the global namespace.
     @Inject
     public static Client client;
     @Inject
     public static ClientThread clientThread;
+    @Inject
+    public static AutoQuesterConfig config;
 
     @Inject
     public PlayerUtil playerUtil;
     @Inject
     public AutoQuesterHelper acHelper;
 
-    @Inject
-    private AutoQuesterConfig config;
     @Inject
     private AutoQuesterOverlay overlay;
     @Inject
@@ -107,31 +106,38 @@ public class AutoQuesterPlugin extends Plugin {
         return configManager.getConfig(AutoQuesterConfig.class);
     }
 
+    // Public instance variables.
+    public static WorldPoint GOAL = null;
+    public Player player = null;
+    public boolean started = false;
+    public int timeout = 0;
+    public int idleTicks = 0;
+
     // Create null reference pointers for needed utilities.
     private Pathing pathing = null;
     private Instructions _instructions = null;
     private Action action = null;
-    public Player player = null;
     private Context ctx = null;
     private Registry registry = null;
 
-    // k, v for needed locations.
+    // Different random for all instances, most diverse seeds!
+    private Random _rand = null;
+
+    // k, v for needed locations. (not needed!)
     private WorldPoint shopkeeper = new WorldPoint(3212, 3246, 0);
     private WorldPoint veos = new WorldPoint(3228, 3242, 0);
  
-    // Public instance variables.
-    public static final int MAX_TIMEOUT = 2;
-    public static WorldPoint GOAL = null;
-    public boolean started = false;
-    public int timeout = 0;
-
     @Override
     protected void startUp() throws Exception {
-        keyManager.registerKeyListener(toggle);
+        keyManager.registerKeyListener(start);
+        keyManager.registerKeyListener(skip);
         overlayManager.add(overlay);
         overlayManager.add(tileOverlay);
         
         init();
+        initConfig();
+
+        registerBare();
     }
 
     private void init() {
@@ -140,9 +146,7 @@ public class AutoQuesterPlugin extends Plugin {
         _instructions = new Instructions();
         action = new Action(2);
 
-        log.debug("Pathing: " + pathing);
-        log.debug("Instructions: " + _instructions);
-        log.debug("Action: " + action);
+        _rand = new Random();
 
         if (pathing == null) {
             log.error("Pathing is not initialized properly");
@@ -161,21 +165,49 @@ public class AutoQuesterPlugin extends Plugin {
         Context ctx = new Context(pathing, _instructions, action);
         Registry registry = new Registry(ctx);
 
-        getInstanceVariables();
-        
-        //registry.sheepShearer();
-        registry.cooksAssistant();
+        getClientInstances();
+    }
+
+    private void getClientInstances()
+    {   
+        try {
+            client = RuneLite.getInjector().getInstance(Client.class);
+            player = client.getLocalPlayer();
+        } catch (NullPointerException e) {
+            log.info("Error: Unable to get client instance variables");
+        }
     }
 
     @Override  
     protected void shutDown() throws Exception {
-        keyManager.unregisterKeyListener(toggle);
+        keyManager.unregisterKeyListener(start);
+        keyManager.unregisterKeyListener(skip);
         overlayManager.remove(overlay);
         overlayManager.remove(tileOverlay);
 
         resetEverything();
     }
 
+    private void resetEverything() {
+        started = false;
+
+        // Release client instance variables.
+        client = null;
+        player = null;
+
+        // Release resources for everything and hope garbage collector claims 
+        // them.
+        pathing = null;
+        action = null;
+        // Instructions should be cleared. @see class Instructions
+        _instructions.clear();
+        _instructions = null;
+        // SAFE to release Context and Registry.
+        ctx = null;
+        registry = null;
+    }
+
+    // All remaining public methods:
     /**
      * Get the current instruction's name.
      * @return String, the current instruction's name or no instructions
@@ -188,46 +220,27 @@ public class AutoQuesterPlugin extends Plugin {
             return "No instructions!";
         return _instructions.getName();
     }
-
-    public void resetEverything() {
-        // Release resources for everything and hope garbage collector claims 
-        // them.
-        pathing = null;
-        action = null;
-        player = null;
-        // Instructions should be cleared. @see class Instructions
-        _instructions.clear();
-        _instructions = null;
-        // SAFE to release Context and Registry.
-        ctx = null;
-        registry = null;
-    }
-
-    private void getInstanceVariables()
-    {   
-        try {
-            client = RuneLite.getInjector().getInstance(Client.class);
-            player = client.getLocalPlayer();
-        } catch (NullPointerException e) {
-            log.info("Error: Unable to get instance variables");
-        }
-    }
-
-    // Wrapper to return boolean for player.getAnimation()
-    //private void isAnimating() {
-    //    if (player.getAnimation() == -1)
-    //        return true;
-    //    return false;
-    //}
    
+    // Entry, game logic:
     @Subscribe
     private void onGameTick(GameTick event) {
+        //if (!isStarted())
+        //    return;
+
+        if (playerUtil.isInteracting() || player.getAnimation() == -1)
+            idleTicks++;
+        else
+            idleTicks = 0;
+
+        _instructions.executeInstructions();
+        pathing.run();
+        checkRunEnergy();
+            
+        // logging
         log.info("Idle ticks: " + action.getTicks());
         log.info("Curr idx: " + _instructions.getIdx());
         log.info("Size: " + _instructions.getSize());
         log.info("Curr WorldPoint: " + player.getWorldLocation()); 
-        _instructions.executeInstructions();
-        pathing.run();
     }
 
     @Subscribe
@@ -251,17 +264,50 @@ public class AutoQuesterPlugin extends Plugin {
     }
 
     @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
+    public void onConfigChanged(ConfigChanged event) 
+    {
         if (!event.getGroup().equals("AutoQuesterConfig"))
             return;
     }
 
-    //@Subscribe
+    private void initConfig()
+    {
+        if (config.xMarksTheSpot()) {
+            registry.xMarksTheSpot();
+            log.info("Registered instructions: X Marks the Spot");
+        }
+        if (config.sheepShearer()) {
+            registry.sheepShearer();
+            log.info("Registered instructions: Sheep Shearer");
+        }
+        if (config.cooksAssistant()) {
+            registry.cooksAssistant();
+            log.info("Registered instructions: Cook's Assistant");
+        }
+    }
+
+    /*
+     * Unguarded override to just register all instructions bare. 
+     * @warning UNGUARDED!
+     */
+    private void registerBare()
+    {
+        registry.xMarksTheSpot();
+        registry.sheepShearer();
+        registry.cooksAssistant();
+    }
+
+    @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         GameState state = event.getGameState();
         if (state == GameState.HOPPING || state == GameState.LOGGED_IN)
             return;
         EthanApiPlugin.stopPlugin(this);
+    }
+    
+    private boolean isStarted()
+    {
+        return client.getGameState() == GameState.LOGGED_IN || started;
     }
 
     private void checkRunEnergy() {
@@ -275,35 +321,42 @@ public class AutoQuesterPlugin extends Plugin {
         return EthanApiPlugin.getClient().getVarpValue(173) == 0;
     }
 
-    private final HotkeyListener toggle = new HotkeyListener(
-        () -> config.toggle()) {
+    // Key listeners:
+    private final HotkeyListener start = new HotkeyListener(() -> 
+        config.start()) {
             @Override
             public void hotkeyPressed() {
-            toggle();
+            start();
             }
     };
 
-    public void toggle() {
-        if (client.getGameState() != GameState.LOGGED_IN) {
+    private final HotkeyListener skip = new HotkeyListener(() -> 
+        config.skip()) {
+            @Override
+            public void hotkeyPressed() {
+            skip();  
+            }
+    };
+
+    private void start() {
+        if (client.getGameState() != GameState.LOGGED_IN)
             return;
-        }
         started = !started;
     }
 
-    // A better solution would be to use Widget packets, but if it's only SPACE...
-    private boolean pressSpace() 
+    private void skip() 
     {
-        KeyEvent keyPress = new KeyEvent(client.getCanvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
-        client.getCanvas().dispatchEvent(keyPress);
-        KeyEvent keyRelease = new KeyEvent(client.getCanvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
-        client.getCanvas().dispatchEvent(keyRelease);
-        KeyEvent keyTyped = new KeyEvent(client.getCanvas(), KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, KeyEvent.CHAR_UNDEFINED);
-        client.getCanvas().dispatchEvent(keyTyped);
-        return true;
+        if (_instructions.getSize() == 0) {
+            // do nothing    
+        } else {
+            _instructions.skip();
+        }
     }
-    //private boolean pressSpace() 
-    //{
-    //    Executors.newSingleThreadExecutor().submit(pressKey());
-    //    return true;
+
+    // Wrapper to return boolean for player.getAnimation()
+    //private void isAnimating() {
+    //    if (player.getAnimation() == -1)
+    //        return true;
+    //    return false;
     //}
 }

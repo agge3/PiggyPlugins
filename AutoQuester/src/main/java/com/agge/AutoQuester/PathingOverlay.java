@@ -1,3 +1,17 @@
+/**
+ * @file PathingOverlay.java
+ * @class PathingOverlay
+ * Pathing overlay - Heavily borrowed and adapted from EthanApi.
+ * (All EthanApi code right now!)
+ *
+ * @author agge3
+ * @version 1.0
+ * @since 2024-06-15
+ *
+ * Special thanks to EthanApi and PiggyPlugins for API, inspiration, and a 
+ * source of code at times.
+ */
+
 //package com.example.PathingTesting;
 //
 //import com.google.common.base.Strings;
