@@ -131,8 +131,8 @@ public class AutoQuesterPlugin extends Plugin {
     // Entry, game logic:
     @Subscribe
     private void onGameTick(GameTick event) {
-        //if (!isStarted())
-        //    return;
+        if (!isStarted())
+            return;
 
         if (playerUtil.isInteracting() || player.getAnimation() == -1)
             idleTicks++;
@@ -182,7 +182,8 @@ public class AutoQuesterPlugin extends Plugin {
         GameState state = event.getGameState();
         if (state == GameState.HOPPING || state == GameState.LOGGED_IN)
             return;
-        EthanApiPlugin.stopPlugin(this);
+        // xxx handle stop differently
+        //EthanApiPlugin.stopPlugin(this);
     }
 
     /**
@@ -259,6 +260,11 @@ public class AutoQuesterPlugin extends Plugin {
     {
         _cfg = new HashMap<>();
         try {
+            if (config.testInstructions()) {
+                _cfg.put("Test instructions", true);
+            } else {
+                _cfg.put("Test instructions", false);
+            }
             if (config.xMarksTheSpot()) {
                 _cfg.put("X Marks the Spot", true);
             } else {
@@ -329,6 +335,10 @@ public class AutoQuesterPlugin extends Plugin {
         // Context guaranteed, SAFE to proceed to Instructions Registry.
         Registry registry = new Registry(_ctx);
         try {
+            if (_cfg.get("Test instructions")) {
+                registry.testInstructions();
+                log.info("Registered instructions: Test instructions");
+            }
             if (_cfg.get("X Marks the Spot")) {
                 registry.xMarksTheSpot();
                 log.info("Registered instructions: X Marks the Spot");
@@ -342,15 +352,15 @@ public class AutoQuesterPlugin extends Plugin {
                 log.info("Registered instructions: Cook's Assistant");
             }
             if (_cfg.get("Rune Mysteries")) {
-                registry.cooksAssistant();
+                registry.runeMysteries();
                 log.info("Registered instructions: Rune Mysteries");
             }
             if (_cfg.get("Romeo and Juliet")) {
-                registry.cooksAssistant();
+                registry.romeoAndJuliet();
                 log.info("Registered instructions: Romeo and Juliet");
             }
             if (_cfg.get("The Restless Ghost")) {
-                registry.cooksAssistant();
+                registry.theRestlessGhost();
                 log.info("Registered instructions: The Restless Ghost");
             }
         } catch (NullPointerException e) {

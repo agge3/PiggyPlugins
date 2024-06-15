@@ -51,7 +51,8 @@ public class Instructions {
         if (_idx < _instructions.size() && 
             _instructions.get(_idx).getAsBoolean()) {
             _instructions.remove(_idx);
-            // Do not increment currIdx since the current index is now pointing 
+            _names.remove(_idx);
+            // Do not increment index since the current index is now pointing 
             // to the next instruction.
             return true;
         }

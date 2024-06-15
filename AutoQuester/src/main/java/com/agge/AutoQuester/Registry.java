@@ -80,7 +80,198 @@ public class Registry {
     // be removed. Then move on to the next instruction.
     public void testInstructions()
     {
+        block(longWait);
 
+        interact("Fishing spot", "Net", TILE_OBJECT);
+        block(shortWait);
+
+        // xxx widget
+        block(longWait); 
+        
+        block(medCont);
+
+        talk("Survival Expert");
+        cshort();
+
+        interact("Tree", "Chop down", TILE_OBJECT);
+        block(shortWait);
+
+        interact("Logs", "Use", INVENTORY);
+        interact("Tinderbox", "Use", INVENTORY);
+        block(shortWait);
+
+        interact("Raw shrimps", "Use", INVENTORY);
+        interact("Fire", "Use", TILE_OBJECT);
+        block(shortWait);
+
+        path(3090, 3092);
+        interact("Gate", "Open", TILE_OBJECT);
+        block(shortCont);
+
+        path(3079, 3084);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortWait);
+
+        talk("Master Chef");
+        cshort();
+
+        interact("Pot of flour", "Use", INVENTORY);
+        interact("Bucket of water", "Use", INVENTORY);
+        interact("Bread dough", "Use", INVENTORY);
+        interact("Range", "Use", TILE_OBJECT);
+        block(shortWait);
+
+        path(3073, 3090);
+        block(shortCont);
+
+        path(3086, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+        talk("Quest Guide");
+        cont();
+
+        // widget
+        block(longWait);
+        
+        talk("Quest Guide");
+        cmed();
+        interact("Ladder", "Climb-down", TILE_OBJECT);
+        block(shortWait);
+
+        talk("Mining Instructor");
+        cmed();
+
+        interact("Tin rocks", "Mine", TILE_OBJECT);
+        block(medWait);
+        interact("Copper rocks", "Mine", TILE_OBJECT);
+        block(medWait);
+
+        interact("Furnace", "Use", TILE_OBJECT);
+        block(medWait);
+
+        talk("Mining Instruction");
+        cshort();
+
+        // widget
+        block(longWait);
+        
+        path(3093, 9502);
+        interact("Gate", "Open", TILE_OBJECT);
+        talk("Combat Instructor");
+        cshort();
+        
+        // widget
+        block(longWait);
+        
+        interact("Bronze dagger", "Wield", INVENTORY);
+        talk("Combat Instructor");
+        cshort();
+        interact("Bronze sword", "Wield", INVENTORY);
+        interact("Wooden shield", "Wield", INVENTORY);
+
+        // widget
+        block(longWait);
+        
+        path(3111, 9518);
+        interact("Gate", "Open", TILE_OBJECT);
+
+        interact("Giant rat", "Attack", NPC);
+        block(medWait);
+        path(3110, 9518);
+        interact("Gate", "Open", TILE_OBJECT);
+        block(medCont);
+        talk("Combat Instructor");
+        cshort();
+
+        // widget
+        block(longWait);
+        
+        interact("Shortbow", "Wield", INVENTORY);
+        interact("Bronze arrow", "Wield", INVENTORY);
+        interact("Giant rat", "Attack", NPC);
+
+        path(3111, 9525);
+        interact("Ladder", "Climb-up", TILE_OBJECT);
+        block(shortCont);
+        block(shortWait);
+
+        path(3122, 3123);
+        interact("Bank both", "Use", TILE_OBJECT);
+        block(shortCont);
+
+        // widget
+        block(longWait);
+
+        path(3120, 3121);
+        interact("Poll both", "Use", TILE_OBJECT);
+        block(shortCont);
+        cshort();
+
+        // widget
+        block(longWait);
+
+        path(3124, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+        talk("Account Guide");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Account Guide");
+        clong();
+        path(3129, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+
+        path(3125, 3107);
+        talk("Brother Brace");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Brother Brace");
+        cshort();
+
+        // widget
+        block(longWait);
+
+
+        talk("Brother Brace");
+        cshort();
+
+        path(3122, 3103);
+        interact("Door", "Use", TILE_OBJECT);
+        block(shortCont);
+
+        path(3141, 3088);
+        talk("Magic Instructor");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Magic Instructor");
+
+        // widget
+        block(longWait);
+
+        interact("Chicken", "Cast", NPC);
+        block(medCont);
+        talk("Magic Instructor");
+        cont();
+        dialogue("Yes", 1);
+        cont();
+
+        // random
+        // num = need to parse for num (regex?)
+        int num = 3;
+        dialogue("No, I'm not planning to do that.", num);
+        clong();
+        block(medWait);
+        cont();
     }
 
     public void xMarksTheSpot() 
@@ -95,8 +286,9 @@ public class Registry {
             talk("Veos");
             cshort();
             dialogue("I'm looking for a quest.", 2);
-            clong();
+            cmed();
             dialogue("Yes", 1);
+            block(medCont);
             cmed();
             dialogue("Okay, thanks Veos.", 1);
             cmed();
@@ -132,6 +324,8 @@ public class Registry {
         path(3054, 3245);
         talk("Veos");
         clong();
+        // xxx deal with different continue
+
         // 2 here, to make sure
         clong();
         // Start pathing
@@ -220,7 +414,7 @@ public class Registry {
         }
 
         interact("Pot", TAKE, TILE_ITEM);
-        block(longCont);
+        block(medCont);
 
         // Trapdoor ID = 14880
         interact(14880, "Climb-down", TILE_OBJECT);
@@ -229,6 +423,8 @@ public class Registry {
             "Bucket", Integer.valueOf(TAKE)), null);
         register(() -> _action.block(shortWait), null);
         interact(17385, "Climb-up", TILE_OBJECT);
+        block(medCont);
+
         path(3252, 3266);
         path(3254, 3271);
         interact(ObjectID.DAIRY_COW, "Milk", TILE_OBJECT);
@@ -260,6 +456,7 @@ public class Registry {
         
         path(3186, 3278);
         interact("Egg", TAKE, TILE_ITEM);
+        block(medCont);
         path(new WorldPoint(3208, 3216, 0));
         talk("Cook");
         clong();
@@ -281,10 +478,13 @@ public class Registry {
             clong();
             dialogue("Yes", 1);
             cmed();
+            path(3205, 3209, 1);
+            interact(16672, "Climb-down", TILE_OBJECT);
+            block(shortCont);
         }
 
         // Going to Wizard's Tower.
-        path(3103, 3162); // xxx there's probably a better wp
+        path(3105, 3162); // xxx there's probably a better wp
         interact(2147, "Climb-down", TILE_OBJECT);
         block(medCont); // xxx too long?
         path(3109, 9570, 0); // xxx better wp
@@ -294,6 +494,7 @@ public class Registry {
         cmed();
         dialogue("Okay, here you are.", 1);
         clong();
+        cmed();
         dialogue("Go ahead.", 1);
         clong();
         cmed(); // xxx is this needed? LONG dialogue
@@ -306,6 +507,7 @@ public class Registry {
         path(3108, 3163); // wp
         
         // Going to Varrock.
+        // xxx broken, different path!
         path(3252, 3402);
         talk("Aubury");
         cont();
@@ -342,8 +544,9 @@ public class Registry {
             cont();
             dialogue("Yes, I have seen her actually!", 1);
             clong();
+            cmed();
             dialogue("Yes.", 1);
-            clong();
+            cshort();
             dialogue("Ok, thanks.", 3);
             cont();
         }
@@ -371,7 +574,7 @@ public class Registry {
         path(3255, 3482);
         talk("Father Lawrence");
         cmed();
-        block(shortWait); // cutscene
+        block(medWait); // cutscene
         clong();
 
         // varrock east mine 3x iron: (3286, 3388, 0)
@@ -495,6 +698,211 @@ public class Registry {
         interact(2145, "Use", TILE_OBJECT);
 
         block(medWait); // cutscene 
+    }
+
+    public void tutorialIsland()
+    {
+        talk("Gielinor Guide");
+        interact("Door", "Open", TILE_OBJECT);
+        block(longCont);
+
+        talk("Survial Expect");
+        block(medWait);
+        cshort();
+
+        // widget
+        block(longWait);
+
+        interact("Fishing spot", "Net", TILE_OBJECT);
+        block(shortWait);
+
+        // xxx widget
+        block(longWait); 
+        
+        block(medCont);
+
+        talk("Survival Expert");
+        cshort();
+
+        interact("Tree", "Chop down", TILE_OBJECT);
+        block(shortWait);
+
+        interact("Logs", "Use", INVENTORY);
+        interact("Tinderbox", "Use", INVENTORY);
+        block(shortWait);
+
+        interact("Raw shrimps", "Use", INVENTORY);
+        interact("Fire", "Use", TILE_OBJECT);
+        block(shortWait);
+
+        path(3090, 3092);
+        interact("Gate", "Open", TILE_OBJECT);
+        block(shortCont);
+
+        path(3079, 3084);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortWait);
+
+        talk("Master Chef");
+        cshort();
+
+        interact("Pot of flour", "Use", INVENTORY);
+        interact("Bucket of water", "Use", INVENTORY);
+        interact("Bread dough", "Use", INVENTORY);
+        interact("Range", "Use", TILE_OBJECT);
+        block(shortWait);
+
+        path(3073, 3090);
+        block(shortCont);
+
+        path(3086, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+        talk("Quest Guide");
+        cont();
+
+        // widget
+        block(longWait);
+        
+        talk("Quest Guide");
+        cmed();
+        interact("Ladder", "Climb-down", TILE_OBJECT);
+        block(shortWait);
+
+        talk("Mining Instructor");
+        cmed();
+
+        interact("Tin rocks", "Mine", TILE_OBJECT);
+        block(medWait);
+        interact("Copper rocks", "Mine", TILE_OBJECT);
+        block(medWait);
+
+        interact("Furnace", "Use", TILE_OBJECT);
+        block(medWait);
+
+        talk("Mining Instruction");
+        cshort();
+
+        // widget
+        block(longWait);
+        
+        path(3093, 9502);
+        interact("Gate", "Open", TILE_OBJECT);
+        talk("Combat Instructor");
+        cshort();
+        
+        // widget
+        block(longWait);
+        
+        interact("Bronze dagger", "Wield", INVENTORY);
+        talk("Combat Instructor");
+        cshort();
+        interact("Bronze sword", "Wield", INVENTORY);
+        interact("Wooden shield", "Wield", INVENTORY);
+
+        // widget
+        block(longWait);
+        
+        path(3111, 9518);
+        interact("Gate", "Open", TILE_OBJECT);
+
+        interact("Giant rat", "Attack", NPC);
+        block(medWait);
+        path(3110, 9518);
+        interact("Gate", "Open", TILE_OBJECT);
+        block(medCont);
+        talk("Combat Instructor");
+        cshort();
+
+        // widget
+        block(longWait);
+        
+        interact("Shortbow", "Wield", INVENTORY);
+        interact("Bronze arrow", "Wield", INVENTORY);
+        interact("Giant rat", "Attack", NPC);
+
+        path(3111, 9525);
+        interact("Ladder", "Climb-up", TILE_OBJECT);
+        block(shortCont);
+        block(shortWait);
+
+        path(3122, 3123);
+        interact("Bank both", "Use", TILE_OBJECT);
+        block(shortCont);
+
+        // widget
+        block(longWait);
+
+        path(3120, 3121);
+        interact("Poll both", "Use", TILE_OBJECT);
+        block(shortCont);
+        cshort();
+
+        // widget
+        block(longWait);
+
+        path(3124, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+        talk("Account Guide");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Account Guide");
+        clong();
+        path(3129, 3124);
+        interact("Door", "Open", TILE_OBJECT);
+        block(shortCont);
+
+        path(3125, 3107);
+        talk("Brother Brace");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Brother Brace");
+        cshort();
+
+        // widget
+        block(longWait);
+
+
+        talk("Brother Brace");
+        cshort();
+
+        path(3122, 3103);
+        interact("Door", "Use", TILE_OBJECT);
+        block(shortCont);
+
+        path(3141, 3088);
+        talk("Magic Instructor");
+        cshort();
+
+        // widget
+        block(longWait);
+
+        talk("Magic Instructor");
+
+        // widget
+        block(longWait);
+
+        interact("Chicken", "Cast", NPC);
+        block(medCont);
+        talk("Magic Instructor");
+        cont();
+        dialogue("Yes", 1);
+        cont();
+
+        // random
+        // num = need to parse for num (regex?)
+        int num = 3;
+        dialogue("No, I'm not planning to do that.", num);
+        clong();
+        block(medWait);
+        cont();
     }
 
     /**

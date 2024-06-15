@@ -55,8 +55,8 @@ public class Action {
     public Action(int max)  
     {
         log.info("Constructing Action!");
-        this._max = max;
-        this._ticks = 0;
+        _max = max;
+        _ticks = 0;
     }
 
     public boolean continueDialogue() {
@@ -71,22 +71,22 @@ public class Action {
          }
 
          // These have yet to be needed.
-         //Optional<Widget> continue1Opt = Widgets.search().withId(12648448).hiddenState(false).first();
-         //if (continue1Opt.isPresent()) {
-         //    log.info("continue 1");
-         //    MousePackets.queueClickPacket();
-         //    WidgetPackets.queueResumePause(continue1Opt.get().getId(), 1);
-         //    timeout = 0;
-         //    return true;
-         //}
-         //Optional<Widget> continue2Opt = Widgets.search().withId(41484288).hiddenState(false).first();
-         //if (continue2Opt.isPresent()) {
-         //    log.info("continue 2");
-         //    MousePackets.queueClickPacket();
-         //    WidgetPackets.queueResumePause(continue2Opt.get().getId(), 1);
-         //    timeout = 0;
-         //    return true;
-         //}
+         Optional<Widget> continue1Opt = Widgets.search().withId(12648448).hiddenState(false).first();
+         if (continue1Opt.isPresent()) {
+             log.info("continue 1");
+             MousePackets.queueClickPacket();
+             WidgetPackets.queueResumePause(continue1Opt.get().getId(), 1);
+             _ticks = 0;
+             return true;
+         }
+         Optional<Widget> continue2Opt = Widgets.search().withId(41484288).hiddenState(false).first();
+         if (continue2Opt.isPresent()) {
+             log.info("continue 2");
+             MousePackets.queueClickPacket();
+             WidgetPackets.queueResumePause(continue2Opt.get().getId(), 1);
+             _ticks = 0;
+             return true;
+         }
 
          if (_ticks > 1) {
              _ticks = 0;
@@ -204,10 +204,10 @@ public class Action {
     public boolean block(int ticks)
     {
         log.info("Blocking next action!");
-        this._ticks++;
-        log.info("Ticks: " + this._ticks);
-        if (this._ticks > ticks) {
-            this._ticks = 0;
+        _ticks++;
+        log.info("Ticks: " + _ticks);
+        if (_ticks > ticks) {
+            _ticks = 0;
             return true;
         }
         return false;
@@ -215,22 +215,22 @@ public class Action {
 
     public void setMax(int max)
     {
-        this._max = max;
+        _max = max;
     }
 
     public int getMax()
     {
-        return this._max;
+        return _max;
     }
 
     public int getTicks()
     {
-        return this._ticks;
+        return _ticks;
     }
 
     public boolean timeout(int n)
     {
-        return this._ticks > n;
+        return _ticks > n;
     }
     
     private int _max;
