@@ -145,7 +145,13 @@ public class Instructions {
      */
     public String getName()
     {
-        return _names.get(_idx);
+        // Need to have idx + 1 to see the proper instruction.
+        try {
+            return _names.get(_idx + 1);
+        } catch (Exception e) {
+            // Just catch the out-of-bounds exception and return a message.
+            return "Last instruction!";
+        }
     }
 
     /**
