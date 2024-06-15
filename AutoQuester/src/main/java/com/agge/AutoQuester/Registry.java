@@ -51,9 +51,12 @@ public class Registry {
      */
     public Registry(Context ctx)
     {
+        log.info("Constructing Registry!");
+
         // Instance context.
-        _pathing = ctx.pathing;
+        _cfg = ctx.cfg;
         _instructions = ctx.instructions;
+        _pathing = ctx.pathing;
         _action = ctx.action;
 
         this._rand = new Random();
@@ -82,7 +85,9 @@ public class Registry {
 
     public void xMarksTheSpot() 
     {
-        if (!AutoQuesterPlugin.config.startedXMarksTheSpot()) {
+        if (!_cfg.get("Started X Marks the Spot")) {
+            log.info("Already started X Marks the Spot!");
+
             // Starting the quest.
             path(3228, 3242);
             
@@ -114,7 +119,12 @@ public class Registry {
         // Dig 3
         path(3109, 3264);
         interact("Spade", "Dig", INVENTORY);
+
         // Dig 4
+        // xxx or just hard force the gate? if it's already open, will break!
+        path(3077, 3257);
+        path(3078, 3261);
+
         path(3078, 3259);
         interact("Spade", "Dig", INVENTORY);
 
@@ -133,7 +143,9 @@ public class Registry {
     public void sheepShearer()
     {
         // xxx handle if it's started already or not
-        //if (AutoQuesterPlugin.getConfig.starterSheepShearer()) {
+        if (!_cfg.get("Started Sheep Shearer")) {
+            log.info("Already started Sheep Shearer!");
+        }
 
         // Fred the Farmer, pickup shears
         path(new WorldPoint(3190, 3273, 0));
@@ -166,7 +178,7 @@ public class Registry {
         
         path(new WorldPoint(3209, 3213, 1));
         interact("Spinning wheel", "Spin", TILE_OBJECT);
-        register(() -> _action.pressSpace(), null);
+        //register(() -> _action.pressSpace(), null);
         block(medWait);
         
         // Climb-down stairs
@@ -190,15 +202,17 @@ public class Registry {
         // Not a good way to avoid pathing here, whether it's started or not...
         path(new WorldPoint(3208, 3216, 0));
 
-        if (!AutoQuesterPlugin.config.startedCooksAssistant()) {
+        if (!_cfg.get("Started Cook's Assistant")) {
+            log.info("Already started Cook's Assistant!");
+
             talk("Cook");
-            register(() -> this._action.continueDialogue(), null);
-            register(() -> this._action.selectDialogue(
+            register(() -> _action.continueDialogue(), null);
+            register(() -> _action.selectDialogue(
                 "You don't look very happy.", 3), null);
-            register(() -> this._action.continueDialogue(), shortCont);
-            register(() -> this._action.selectDialogue(
+            register(() -> _action.continueDialogue(), shortCont);
+            register(() -> _action.selectDialogue(
                 "What's wrong?", 1), null);
-            register(() -> this._action.continueDialogue(), medCont);
+            register(() -> _action.continueDialogue(), medCont);
             dialogue("Yes", 1);
             cshort();
             dialogue("Actually, I know where to find this stuff", 4);
@@ -207,16 +221,17 @@ public class Registry {
 
         interact("Pot", TAKE, TILE_ITEM);
         block(longCont);
+
         // Trapdoor ID = 14880
-        interact(String.valueOf(14880), "Climb-down", TILE_OBJECT);
+        interact(14880, "Climb-down", TILE_OBJECT);
         block(longCont);
-        register(() -> this._action.interactTileItem(
+        register(() -> _action.interactTileItem(
             "Bucket", Integer.valueOf(TAKE)), null);
-        register(() -> this._action.block(shortWait), null);
-        interact(String.valueOf(17385), "Climb-up", TILE_OBJECT);
+        register(() -> _action.block(shortWait), null);
+        interact(17385, "Climb-up", TILE_OBJECT);
         path(3252, 3266);
         path(3254, 3271);
-        interact(String.valueOf(ObjectID.DAIRY_COW), "Milk", TILE_OBJECT);
+        interact(ObjectID.DAIRY_COW, "Milk", TILE_OBJECT);
         block(longCont);
         path(3163, 3288);
         path(3162, 3292);
@@ -238,13 +253,248 @@ public class Registry {
         block(medCont);
         interact(1781, "Empty", TILE_OBJECT);
         block(medCont);
+
+        // xxx to maybe guarantee door? can break!!
         //path(3167, 3303);
         //interact(1524, "Open", TILE_OBJECT);
+        
         path(3186, 3278);
         interact("Egg", TAKE, TILE_ITEM);
         path(new WorldPoint(3208, 3216, 0));
         talk("Cook");
         clong();
+    }
+
+    public void runeMysteries()
+    {
+        if (!_cfg.get("Started Rune Mysteries")) {
+            log.info("Already started Rune Mysteries!");
+
+            // not started
+            path(3205, 3209);
+            interact(16671, "Climb-up", TILE_OBJECT);
+            block(shortCont);
+            path(3210, 3224, 1);
+            talk("Duke Horacio");
+            cont();
+            dialogue("Have you any quests for me?", 1);
+            clong();
+            dialogue("Yes", 1);
+            cmed();
+        }
+
+        // Going to Wizard's Tower.
+        path(3103, 3162); // xxx there's probably a better wp
+        interact(2147, "Climb-down", TILE_OBJECT);
+        block(medCont); // xxx too long?
+        path(3109, 9570, 0); // xxx better wp
+        path(3103, 9571, 0); // xxx better wp
+        // @note from here on out: "wp" = "xxx better wp" 
+        talk("Archmage Sedridor");
+        cmed();
+        dialogue("Okay, here you are.", 1);
+        clong();
+        dialogue("Go ahead.", 1);
+        clong();
+        cmed(); // xxx is this needed? LONG dialogue
+        dialogue("Yes, certainly.", 1);
+        cmed();
+        path(3109, 9570, 0);
+        path(3104, 9587, 0);
+        interact(2148, "Climb-up", TILE_OBJECT);
+        block(medCont); // xxx too long?
+        path(3108, 3163); // wp
+        
+        // Going to Varrock.
+        path(3252, 3402);
+        talk("Aubury");
+        cont();
+        dialogue("I've been sent here with a package for you.", 2);
+        clong();
+        cmed(); // xxx
+        
+        // Back to Wizard's Tower.
+        path(3103, 3162); // xxx there's probably a better wp
+        interact(2147, "Climb-down", TILE_OBJECT);
+        block(medCont); // xxx too long?
+        path(3109, 9570, 0); // xxx better wp
+        path(3103, 9571, 0); // xxx better wp
+        // @note from here on out: "wp" = "xxx better wp" 
+        talk("Archmage Sedridor");
+        clong();
+
+        // Leave Wizard's Tower.
+        path(3109, 9570, 0);
+        path(3104, 9587, 0);
+        interact(2148, "Climb-up", TILE_OBJECT);
+        block(medCont); // xxx too long?
+        path(3108, 3163); // wp
+    }
+
+    public void romeoAndJuliet()
+    {
+        if (!_cfg.get("Started Romeo and Juliet")) {
+            log.info("Already started Rune Mysteries!");
+            
+            // not started
+            path(3213, 3428);
+            talk("Romeo");
+            cont();
+            dialogue("Yes, I have seen her actually!", 1);
+            clong();
+            dialogue("Yes.", 1);
+            clong();
+            dialogue("Ok, thanks.", 3);
+            cont();
+        }
+
+        // To Juliet.
+        path(3159, 3436);
+        interact(11797, "Climb-up", TILE_OBJECT);
+        block(shortCont);
+        path(3158, 3425, 1);
+        talk("Juliet");
+        clong();
+        path(3157, 3429, 1); // wp
+        path(3155, 3436, 1);
+        interact(11799, "Climb-down", TILE_OBJECT);
+        block(shortCont);
+
+        // Back to Romeo.
+        path(3213, 3428);
+        talk("Romeo");
+        clong();
+        clong();
+        dialogue("Ok, thanks.", 4);
+
+        // To Father Lawrence.
+        path(3255, 3482);
+        talk("Father Lawrence");
+        cmed();
+        block(shortWait); // cutscene
+        clong();
+
+        // varrock east mine 3x iron: (3286, 3388, 0)
+        
+        // Cadava berries.
+        path(3270, 3370);
+
+        // bush1 = 23635, bush2 = 23625, bush3 = 33183
+        // random select
+        int[] a = {23635, 23625, 33183};
+        interact(rand(a), "Pick-from", TILE_OBJECT);
+        block(shortWait);
+
+        path(3195, 3404);
+        talk("Apothecary");
+        cont();
+        dialogue("Talk about something else.", 2);
+        dialogue("Talk about Romeo & Juliet.", 1);
+        cmed();
+        block(shortCont); // animation
+        cshort();
+
+        // To Juliet.
+        path(3159, 3436);
+        interact(11797, "Climb-up", TILE_OBJECT);
+        block(shortCont);
+        path(3158, 3425, 1);
+        talk("Juliet");
+        clong();
+        block(shortWait); // cutscene
+        cmed();
+        block(medCont); // xxx needed?
+        cont();
+        block(medCont); // xxx needed?
+        cmed();
+        block(longCont); // animation
+        cshort();
+        block(longCont); // animation
+
+        // Leave Juliet.
+        path(3157, 3429, 1); // wp
+        path(3155, 3436, 1);
+        interact(11799, "Climb-down", TILE_OBJECT);
+        block(shortCont);
+
+        // To Romeo.
+        path(3213, 3428);
+        talk("Romeo");
+        cmed();
+        block(medCont); // cutscene
+        cshort();
+        block(longCont); // cutscene
+        cont();
+        block(shortWait); // cutscene
+        cshort();
+        block(shortWait); // cutscene
+        cmed();
+        block(shortWait); // finishing cutscene
+    }   
+
+    public void theRestlessGhost()
+    {
+        if (!_cfg.get("Started The Restless Ghost")) {
+            log.info("Already started The Restless Ghost!");
+            // not started
+            path(3243, 3208);
+            talk("Father Aereck");
+            cont();
+            dialogue("I'm looking for a quest!", 3);
+            cshort();
+            dialogue("Yes", 1);
+            clong();
+        }
+
+        // Go to Father Urhney
+        path(3145, 3175);
+        talk("Father Urhney");
+        cont();
+        dialogue("Father Aereck sent me to talk to you.", 2);
+        cshort();
+        dialogue("He's got a ghost haunting his graveyard.", 1);
+        clong();
+        interact("Ghostspeak amulet", "Wear", INVENTORY); // xxx might break
+
+        // To Wizard's Tower.
+        path(3103, 3162); // xxx there's probably a better wp
+        interact(2147, "Climb-down", TILE_OBJECT);
+        block(medCont); // xxx too long?
+
+        // Go to coffin.
+        path(3248, 3193);
+        interact(2145, "Open", TILE_OBJECT);
+        block(shortWait);
+        talk("Restless ghost");
+        cmed();
+        dialogue("Yep, now tell me what the problem is.", 1);
+        clong();
+
+        // Go to Skeleton.
+        path(3107, 9558, 0);
+        path(3114, 9561, 0);
+
+        // xxx could also just interact and block, but want to minimize damage
+        path(3120, 9565, 0);
+        interact(2146, "Search", TILE_OBJECT);
+        block(minWait);
+        path(3114, 9561, 0);
+        path(3107, 9558, 0);
+
+        path(3104, 9576, 0);
+        interact(2148, "Climb-up", TILE_OBJECT);
+        block(medCont); // xxx too long?
+        path(3108, 3163); // wp
+
+        // Go to coffin.
+        path(3248, 3193);
+        interact(2145, "Open", TILE_OBJECT);
+        block(longCont);
+        // xxx might have to do different way
+        interact("Ghost's skull", "Use", INVENTORY);
+        interact(2145, "Use", TILE_OBJECT);
+
+        block(medWait); // cutscene 
     }
 
     /**
@@ -365,7 +615,10 @@ public class Registry {
         }
     }
     
-    /**
+    /**        // bush1 = 23635, bush2 = 23625, bush3 = 33183
+        // random select
+        int[] a = {23635, 23625, 33183};
+        int tmp = _rand.nextInt(a.length);
      * Common dialogue helper macros.
      */
     private void cont()
@@ -382,7 +635,10 @@ public class Registry {
     }
 
     private void cmed()
-    {
+    {        // bush1 = 23635, bush2 = 23625, bush3 = 33183
+        // random select
+        int[] a = {23635, 23625, 33183};
+        int tmp = _rand.nextInt(a.length);
         _instructions.register(() -> _action.continueDialogue(),
                 "Continue dialogue: " + medCont + " times", 
                 Optional.of(medCont));
@@ -399,6 +655,14 @@ public class Registry {
     {
         _instructions.register(() -> _action.selectDialogue(str, choice),
                 "Dialogue: " + str + " (" + choice + ")");
+    }
+
+    /**
+     * @warning NO guardrails.
+     */
+    private int rand(int[] a)
+    {
+        return a[_rand.nextInt(a.length)];
     }
 
     /**
@@ -440,7 +704,8 @@ public class Registry {
     /*
      * Plugin Context for the Registry.
      */
-    private Pathing _pathing;
+    private Map<String, Boolean> _cfg;
     private Instructions _instructions;
+    private Pathing _pathing;
     private Action _action;
 }

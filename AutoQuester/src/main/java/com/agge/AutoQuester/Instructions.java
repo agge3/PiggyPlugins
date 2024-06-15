@@ -34,6 +34,8 @@ import java.util.ArrayList;
 public class Instructions {
     public Instructions()
     {
+        log.info("Constructing Instructions!");
+
         _instructions = new ArrayList<>();
         _names = new ArrayList<>();
         //_goals = new ArrayList<>();

@@ -69,6 +69,7 @@ public interface AutoQuesterConfig extends Config {
     {
         return false;
     }
+
     @ConfigItem(
             keyName = "startedXMarksTheSpot",
             name = "X Marks the Spot already started?",
@@ -80,6 +81,7 @@ public interface AutoQuesterConfig extends Config {
     {
         return false;
     }
+
     @ConfigItem(
             keyName = "sheepShearer",
             name = "Sheep Shearer",
@@ -91,6 +93,7 @@ public interface AutoQuesterConfig extends Config {
     {
         return false;
     }
+
     @ConfigItem(
             keyName = "startedSheepShearer",
             name = "Sheep Shearer already started?",
@@ -102,6 +105,7 @@ public interface AutoQuesterConfig extends Config {
     {
         return false;
     }
+
     @ConfigItem(
             keyName = "cooksAssistant",
             name = "Cook's Assistant",
@@ -113,6 +117,7 @@ public interface AutoQuesterConfig extends Config {
     {
         return false;
     }
+
     @ConfigItem(
             keyName = "startedCooksAssistant",
             name = "Cook's Assistant already started?",
@@ -121,6 +126,78 @@ public interface AutoQuesterConfig extends Config {
             section = autoQuesterConfig
     )
     default boolean startedCooksAssistant() 
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "runeMysteries",
+            name = "Rune Mysteries",
+            description = "Toggle",
+            position = 10,
+            section = autoQuesterConfig
+    )
+    default boolean runeMysteries() 
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "startedRuneMysteries",
+            name = "Rune Mysteries already started?",
+            description = "Toggle",
+            position = 11,
+            section = autoQuesterConfig
+    )
+    default boolean startedRuneMysteries() 
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "romeoAndJuliet",
+            name = "Romeo and Juliet",
+            description = "Toggle",
+            position = 12,
+            section = autoQuesterConfig
+    )
+    default boolean romeoAndJuliet() 
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "startedRomeoAndJuliet",
+            name = "Romeo and Juliet already started?",
+            description = "Toggle",
+            position = 13,
+            section = autoQuesterConfig
+    )
+    default boolean startedRomeoAndJuliet() 
+    {
+        return false;
+    }   
+
+    @ConfigItem(
+            keyName = "theRestlessGhost",
+            name = "The Restless Ghost",
+            description = "Toggle",
+            position = 14,
+            section = autoQuesterConfig
+    )
+    default boolean theRestlessGhost() 
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            keyName = "startedtheRestlessGhost",
+            name = "The Restless Ghost already started?",
+            description = "Toggle",
+            position = 15,
+            section = autoQuesterConfig
+    )
+    default boolean startedTheRestlessGhost() 
     {
         return false;
     }

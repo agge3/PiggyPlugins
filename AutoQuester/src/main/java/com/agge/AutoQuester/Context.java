@@ -15,19 +15,21 @@ import com.agge.AutoQuester.Pathing;
 import com.agge.AutoQuester.Instructions;
 import com.agge.AutoQuester.Action;
 
+import java.util.Map;
+
 public class Context {
     // Instance context.
-    public Pathing pathing;
-    //public Random random;
+    public Map<String, Boolean> cfg;
     public Instructions instructions;
+    public Pathing pathing;
     public Action action;
 
-    public Context(Pathing pathing, Instructions instructions, 
-            Action action)
+    public Context(Map<String, Boolean> cfg, Instructions instructions, 
+            Pathing pathing, Action action)
     {
-        this.pathing = pathing;
-        //this.random = random;
+        this.cfg = cfg;
         this.instructions = instructions;
+        this.pathing = pathing;
         this.action = action;
     }
 }

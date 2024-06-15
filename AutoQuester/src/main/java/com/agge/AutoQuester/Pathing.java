@@ -46,6 +46,8 @@ import java.util.Random;
 public class Pathing {
     public Pathing()
     {
+        log.info("Constructing Pathing!");
+
         _ticks = 0;
         _isDoored = false;
     }

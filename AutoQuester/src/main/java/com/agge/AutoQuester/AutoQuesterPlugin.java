@@ -80,14 +80,14 @@ public class AutoQuesterPlugin extends Plugin {
     public static Client client;
     @Inject
     public static ClientThread clientThread;
-    @Inject
-    public static AutoQuesterConfig config;
 
     @Inject
     public PlayerUtil playerUtil;
     @Inject
     public AutoQuesterHelper acHelper;
 
+    @Inject
+    private AutoQuesterConfig config;
     @Inject
     private AutoQuesterOverlay overlay;
     @Inject
@@ -106,80 +106,20 @@ public class AutoQuesterPlugin extends Plugin {
         return configManager.getConfig(AutoQuesterConfig.class);
     }
 
-    // Public instance variables.
-    public static WorldPoint GOAL = null;
-    public Player player = null;
-    public boolean started = false;
-    public int timeout = 0;
-    public int idleTicks = 0;
-
-    // Create null reference pointers for needed utilities.
-    private Pathing pathing = null;
-    private Instructions _instructions = null;
-    private Action action = null;
-    private Context ctx = null;
-    private Registry registry = null;
-
-    // Different random for all instances, most diverse seeds!
-    private Random _rand = null;
-
-    // k, v for needed locations. (not needed!)
-    private WorldPoint shopkeeper = new WorldPoint(3212, 3246, 0);
-    private WorldPoint veos = new WorldPoint(3228, 3242, 0);
- 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() throws Exception
+    {
         keyManager.registerKeyListener(start);
         keyManager.registerKeyListener(skip);
         overlayManager.add(overlay);
         overlayManager.add(tileOverlay);
         
         init();
-        initConfig();
-
-        registerBare();
     }
-
-    private void init() {
-        // Instantiate objects that need clean state.
-        pathing = new Pathing();
-        _instructions = new Instructions();
-        action = new Action(2);
-
-        _rand = new Random();
-
-        if (pathing == null) {
-            log.error("Pathing is not initialized properly");
-            throw new IllegalStateException("Pathing is not initialized properly");
-        }
-        if (_instructions == null) {
-            log.error("Instructions is not initialized properly");
-            throw new IllegalStateException("Instructions is not initialized properly");
-        }
-        if (action == null) {
-            log.error("Action is not initialized properly");
-            throw new IllegalStateException("Action is not initialized properly");
-        }
-
-        // Package in Context for the Instructions Registry.
-        Context ctx = new Context(pathing, _instructions, action);
-        Registry registry = new Registry(ctx);
-
-        getClientInstances();
-    }
-
-    private void getClientInstances()
-    {   
-        try {
-            client = RuneLite.getInjector().getInstance(Client.class);
-            player = client.getLocalPlayer();
-        } catch (NullPointerException e) {
-            log.info("Error: Unable to get client instance variables");
-        }
-    }
-
+ 
     @Override  
-    protected void shutDown() throws Exception {
+    protected void shutDown() throws Exception
+    {
         keyManager.unregisterKeyListener(start);
         keyManager.unregisterKeyListener(skip);
         overlayManager.remove(overlay);
@@ -188,39 +128,6 @@ public class AutoQuesterPlugin extends Plugin {
         resetEverything();
     }
 
-    private void resetEverything() {
-        started = false;
-
-        // Release client instance variables.
-        client = null;
-        player = null;
-
-        // Release resources for everything and hope garbage collector claims 
-        // them.
-        pathing = null;
-        action = null;
-        // Instructions should be cleared. @see class Instructions
-        _instructions.clear();
-        _instructions = null;
-        // SAFE to release Context and Registry.
-        ctx = null;
-        registry = null;
-    }
-
-    // All remaining public methods:
-    /**
-     * Get the current instruction's name.
-     * @return String, the current instruction's name or no instructions
-     * @note Don't allow direct access to _instructions, return a new 
-     * String object.
-     */
-    public String getInstructionName()
-    {
-        if (_instructions.getSize() == 0)
-            return "No instructions!";
-        return _instructions.getName();
-    }
-   
     // Entry, game logic:
     @Subscribe
     private void onGameTick(GameTick event) {
@@ -270,19 +177,184 @@ public class AutoQuesterPlugin extends Plugin {
             return;
     }
 
+    @Subscribe
+    public void onGameStateChanged(GameStateChanged event) {
+        GameState state = event.getGameState();
+        if (state == GameState.HOPPING || state == GameState.LOGGED_IN)
+            return;
+        EthanApiPlugin.stopPlugin(this);
+    }
+
+    /**
+     * Get the current instruction's name.
+     * @return String, the current instruction's name or no instructions
+     * @note Don't allow direct access to _instructions, return a new 
+     * String object.
+     */
+    public String getInstructionName()
+    {
+        if (_instructions.getSize() == 0)
+            return "No instructions!";
+        return _instructions.getName();
+    }
+
+    // Public instance variables.
+    public static WorldPoint GOAL = null;
+    public Player player = null;
+    public boolean started = false;
+    public int timeout = 0;
+    public int idleTicks = 0;
+
+    private void init()
+    {
+        // Go through initialization states. Catch errors, if there is -- a lot 
+        // of moving pieces.
+        initClient();
+        initInstance();
+        initConfig();
+        try {
+            _ctx = new Context(_cfg, _instructions, pathing, action);
+        } catch (NullPointerException e) {
+            log.info("Error: Could not create plugin Context, objects not initialized correctly");
+        }
+        initRegistry();
+    }
+
+    private void initClient()
+    {   
+        try {
+            client = RuneLite.getInjector().getInstance(Client.class);
+            player = client.getLocalPlayer();
+        } catch (NullPointerException e) {
+            log.info("Error: Unable to get client instance variables");
+        }
+    }
+
+    private void initInstance()
+    {
+        // Instantiate objects that need clean state.
+        pathing = new Pathing();
+        _instructions = new Instructions();
+        action = new Action(2);
+
+        if (pathing == null) {
+            log.error("Pathing is not initialized properly");
+            throw new IllegalStateException(
+                "Pathing is not initialized properly");
+        }
+        if (_instructions == null) {
+            log.error("Instructions is not initialized properly");
+            throw new IllegalStateException(
+                "Instructions is not initialized properly");
+        }
+        if (action == null) {
+            log.error("Action is not initialized properly");
+            throw new IllegalStateException(
+                "Action is not initialized properly");
+        }
+    }
+
+
     private void initConfig()
     {
-        if (config.xMarksTheSpot()) {
-            registry.xMarksTheSpot();
-            log.info("Registered instructions: X Marks the Spot");
+        _cfg = new HashMap<>();
+        try {
+            if (config.xMarksTheSpot()) {
+                _cfg.put("X Marks the Spot", true);
+            } else {
+                _cfg.put("X Marks the Spot", false);
+            }
+            if (config.startedXMarksTheSpot()) {
+                _cfg.put("Started X Marks the Spot", true);
+            } else {
+                _cfg.put("Started X Marks the Spot", false);
+            }
+            if (config.sheepShearer()) {
+                _cfg.put("Sheep Shearer", true);
+            } else {
+                _cfg.put("Sheep Shearer", false);
+            }
+            if (config.startedSheepShearer()) {
+                _cfg.put("Started Sheep Shearer", true);
+            } else {
+                _cfg.put("Started Sheep Shearer", false);
+            }
+            if (config.cooksAssistant()) {
+                _cfg.put("Cook's Assistant", true);
+            } else {
+                _cfg.put("Cook's Assistant", false);
+            }
+            if (config.startedCooksAssistant()) {
+                _cfg.put("Started Cook's Assistant", true);
+            } else {
+                _cfg.put("Started Cook's Assistant", false);
+            }
+            if (config.runeMysteries()) {
+                _cfg.put("Rune Mysteries", true);
+            } else {
+                _cfg.put("Rune Mysteries", false);
+            }
+            if (config.startedRuneMysteries()) {
+                _cfg.put("Started Rune Mysteries", true);
+            } else {
+                _cfg.put("Started Rune Mysteries", false);
+            }
+            if (config.romeoAndJuliet()) {
+                _cfg.put("Romeo and Juliet", true);
+            } else {
+                _cfg.put("Romeo and Juliet", false);
+            }
+            if (config.startedRomeoAndJuliet()) {
+                _cfg.put("Started Romeo and Juliet", true);
+            } else {
+                _cfg.put("Started Romeo and Juliet", false);
+            }
+            if (config.theRestlessGhost()) {
+                _cfg.put("The Restless Ghost", true);
+            } else {
+                _cfg.put("The Restless Ghost", false);
+            }
+            if (config.startedTheRestlessGhost()) {
+                _cfg.put("Started The Restless Ghost", true);
+            } else {
+                _cfg.put("Started The Restless Ghost", false);
+            }
+        } catch (NullPointerException e) {
+            log.info("Error: Unable to process configuration");
         }
-        if (config.sheepShearer()) {
-            registry.sheepShearer();
-            log.info("Registered instructions: Sheep Shearer");
-        }
-        if (config.cooksAssistant()) {
-            registry.cooksAssistant();
-            log.info("Registered instructions: Cook's Assistant");
+    }
+
+    private void initRegistry()
+    {
+        // Context guaranteed, SAFE to proceed to Instructions Registry.
+        Registry registry = new Registry(_ctx);
+        try {
+            if (_cfg.get("X Marks the Spot")) {
+                registry.xMarksTheSpot();
+                log.info("Registered instructions: X Marks the Spot");
+            }
+            if (_cfg.get("Sheep Shearer")) {
+                registry.sheepShearer();
+                log.info("Registered instructions: Sheep Shearer");
+            }
+            if (_cfg.get("Cook's Assistant")) {
+                registry.cooksAssistant();
+                log.info("Registered instructions: Cook's Assistant");
+            }
+            if (_cfg.get("Rune Mysteries")) {
+                registry.cooksAssistant();
+                log.info("Registered instructions: Rune Mysteries");
+            }
+            if (_cfg.get("Romeo and Juliet")) {
+                registry.cooksAssistant();
+                log.info("Registered instructions: Romeo and Juliet");
+            }
+            if (_cfg.get("The Restless Ghost")) {
+                registry.cooksAssistant();
+                log.info("Registered instructions: The Restless Ghost");
+            }
+        } catch (NullPointerException e) {
+            log.info("Error: Unable to register instructions");
         }
     }
 
@@ -292,32 +364,50 @@ public class AutoQuesterPlugin extends Plugin {
      */
     private void registerBare()
     {
-        registry.xMarksTheSpot();
-        registry.sheepShearer();
-        registry.cooksAssistant();
+        try {
+          registry.xMarksTheSpot();
+          registry.sheepShearer();
+          registry.cooksAssistant();
+        } catch (NullPointerException e) {
+          log.debug("Bare Registry failed!");
+        }
     }
 
-    @Subscribe
-    public void onGameStateChanged(GameStateChanged event) {
-        GameState state = event.getGameState();
-        if (state == GameState.HOPPING || state == GameState.LOGGED_IN)
-            return;
-        EthanApiPlugin.stopPlugin(this);
+    private void resetEverything()
+    {
+        started = false;
+
+        // Release client instance variables.
+        client = null;
+        player = null;
+
+        // Release resources for everything and hope garbage collector claims 
+        // them.
+        pathing = null;
+        action = null;
+        // Instructions should be cleared. @see class Instructions
+        _instructions.clear();
+        _instructions = null;
+        // SAFE to release Context and Registry.
+        _ctx = null;
+        registry = null;
     }
-    
+ 
     private boolean isStarted()
     {
         return client.getGameState() == GameState.LOGGED_IN || started;
     }
 
-    private void checkRunEnergy() {
+    private void checkRunEnergy() 
+    {
         if (runIsOff() && playerUtil.runEnergy() >= 30) {
             MousePackets.queueClickPacket();
             WidgetPackets.queueWidgetActionPacket(1, 10485787, -1, -1);
         }
     }
 
-    private boolean runIsOff() {
+    private boolean runIsOff()
+    {
         return EthanApiPlugin.getClient().getVarpValue(173) == 0;
     }
 
@@ -359,4 +449,21 @@ public class AutoQuesterPlugin extends Plugin {
     //        return true;
     //    return false;
     //}
+
+    // Different random for all instances, more diverse seeds!
+    //private Random _rand;
+
+    // Create null reference pointers for needed utilities.
+    private Pathing pathing;
+    private Instructions _instructions;
+    private Action action;
+    private Context _ctx;
+    private Registry registry;
+
+    // Local config. Guarantee that every pointer points to this memory address.
+    private Map<String, Boolean> _cfg;
+
+    // k, v for needed locations. xxx not needed!
+    private WorldPoint shopkeeper = new WorldPoint(3212, 3246, 0);
+    private WorldPoint veos = new WorldPoint(3228, 3242, 0);
 }
