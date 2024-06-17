@@ -11,6 +11,9 @@
 
 package com.polyplugins.AutoLoot;
 
+import com.polyplugins.AutoLoot.AutoLootConfig;
+import com.polyplugins.AutoLoot.IntPtr;
+
 import com.example.EthanApiPlugin.Collections.Inventory;
 import com.example.EthanApiPlugin.Collections.NPCs;
 import com.example.EthanApiPlugin.Collections.query.NPCQuery;
@@ -22,7 +25,6 @@ import net.runelite.api.*;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
-import com.polyplugins.AutoLoot.IntPtr;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,19 +36,24 @@ public class Util {
     private Client client;
     @Inject
     private ClientThread clientThread;
-    @Inject
-    private AutoLootConfig config;
 
-    public boolean hasWaited(IntPtr ticks) {
-        if (ticks.get() > config.waitFor()) {
+    /**
+     * Has the player waited the configuration wait duration?
+     * @note Not dealing with dependency injection, passing a context.
+     */
+    public boolean hasWaited(IntPtr ticks, AutoLootConfig cfg) 
+    {
+        if (ticks.get() > cfg.waitFor()) {
             ticks.set(0);
-            flag = false;
+            reset();
         }
-        return !flag;
+        return !_flag;
+        
     }
 
-    public boolean isWaiting(IntPtr ticks) {
-        if (flag) {
+    public boolean isWaiting(IntPtr ticks) 
+    {
+        if (_flag) {
             // ticks++
             int tmp = ticks.get();
             tmp++;
@@ -56,16 +63,33 @@ public class Util {
         return false;
     }   
 
-    public void shouldWait() {
-        this.flag = true;
+    public void shouldWait() 
+    {
+        if (!_deny)
+            _flag = true;
     }
 
-    /*
+    /**
      * Reset the state of Util.
      */
-    public void reset() {
-        this.flag = false;
+    public void reset() 
+    {
+        _flag = false;
+        _deny = false;
     }
 
-    private boolean flag = false;
+    /**
+     * Block all waiting procedures.
+     */
+    public Boolean denyWait(Boolean flag)
+    { 
+        if (flag != null) {
+            _deny = flag;
+            return _deny;
+        }
+        return null;
+    }
+            
+    private boolean _flag = false;
+    private boolean _deny = false;
 }

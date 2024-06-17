@@ -13,8 +13,8 @@ package com.polyplugins.AutoLoot;
 
 // To have an int reference.
 public class IntPtr {
-    public IntPtr(int val) { this.val = val; }
-    public int get() { return this.val; }
-    public void set(int val) { this.val = val; }
-    private int val;
+    public IntPtr(int val) { _val = val; }
+    public int get() { return _val; }
+    public void set(int val) { _val = val; }
+    private int _val;
 }

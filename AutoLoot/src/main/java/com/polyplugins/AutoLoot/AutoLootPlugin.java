@@ -88,17 +88,17 @@ public class AutoLootPlugin extends Plugin {
         return configManager.getConfig(AutoLootConfig.class);
     }
 
-    public Player player = null;
-    public LocalPoint lootTile = null; 
+    public Player player;
+    public LocalPoint lootTile; 
     
-    private Util util = null;
-    public IntPtr ticks = new IntPtr(0);
-    public Queue<ETileItem> lootQueue = new LinkedList<ETileItem>();
+    public IntPtr ticks;
+    public Queue<ETileItem> lootQueue;
     
     public boolean started = false;
     public int timeout = 0;
     public int idleTicks = 0;
 
+    private Util util;
     private boolean hasBones = false;
     private boolean looting = false;
 
@@ -115,6 +115,7 @@ public class AutoLootPlugin extends Plugin {
         util = new Util();
         ticks = new IntPtr(0);
         lootQueue = new LinkedList<ETileItem>();
+        player = client.getLocalPlayer();
     }
 
     @Override  
@@ -124,6 +125,11 @@ public class AutoLootPlugin extends Plugin {
         overlayManager.remove(tileOverlay);
 
         resetEverything();
+
+        // Clear the references.
+        ticks = null;
+        lootQueue = null;
+        util = null;
     }
 
     private void resetEverything() {
@@ -137,8 +143,6 @@ public class AutoLootPlugin extends Plugin {
         util.reset();
 
         started = false;
-        timeout = 0;
-        idleTicks = 0;
 
         hasBones = false;
         looting = false;
@@ -146,35 +150,28 @@ public class AutoLootPlugin extends Plugin {
 
     @Subscribe
     private void onGameTick(GameTick event) {
-        player = client.getLocalPlayer();
-
-        if (!playerUtil.isInteracting() || player.getAnimation() == -1)
-            idleTicks++;
-        else 
-            idleTicks = 0;
-
-        if (timeout > 0) {
-            timeout--;
-            return;
-        }
-
         if (client.getGameState() != GameState.LOGGED_IN || 
             EthanApiPlugin.isMoving() || 
             !started) {
             return;
         }
 
-        if (lootQueue.isEmpty()) 
-            looting = false;
+        // Will only wait if loot queue flags to wait. 
+        if (util.isWaiting(ticks)); // Do nothing for now, catch the return. 
 
-        util.isWaiting(ticks); // Will only wait if loot queue flags to wait.
-        if (!lootQueue.isEmpty() && util.hasWaited(ticks)) {
+        if (lootQueue.isEmpty()) {
+            looting = false;
+        }
+
+        if (!lootQueue.isEmpty() && util.hasWaited(ticks, config)) {
             if (!Inventory.full()) {
+                log.info("Entering looting");
                 looting = true;
                 ETileItem eti = lootQueue.peek();
                 eti.interact(false);
                 lootQueue.remove();
                 lootTile = null;
+                return; // Block bone-burying until looting is done.
             } else {
                 lootQueue.clear();
                 EthanApiPlugin.sendClientMessage(
@@ -190,6 +187,7 @@ public class AutoLootPlugin extends Plugin {
                     WidgetPackets.queueWidgetAction(bone, "Bury");
                     timeout = 1;
         });
+
         Inventory.search().onlyUnnoted().withAction("Scatter").filter(
             b -> config.buryBones()).first().ifPresent(
                 bone -> {
@@ -197,11 +195,6 @@ public class AutoLootPlugin extends Plugin {
                     WidgetPackets.queueWidgetAction(bone, "Scatter");
                     timeout = 1;
         });
-
-        if (playerUtil.isInteracting() || looting) {
-            timeout = 3;
-            return;
-        }
     }
 
     @Subscribe  
@@ -216,29 +209,31 @@ public class AutoLootPlugin extends Plugin {
 		    final Tile tile = itemSpawned.getTile();
 		    ETileItem eti = new ETileItem(tile.getWorldLocation(), item);
             
-            // For name matching to string.
-            ItemComposition comp = itemManager.getItemComposition(item.getId());
-            String name = comp.getName();
             for (String str : lootHelper.getLootNames()) {
-                if (str.equals(name)) {
-                    lootTile = tile.getLocalLocation();
-                    lootQueue.add(eti);
-                    if (!util.isWaiting(ticks)) // Don't want to re-wait!
+                TileItems.search()
+                         .withId(item.getId())
+                         .withName(str)
+                         .first().ifPresent(i -> { lootQueue.add(i); });
+                log.info("Added "  + str + " to loot queue!");
+
+                    // Don't wait to re-wait!
+                    if (!util.isWaiting(ticks)) {
                         util.shouldWait();
                 }
             }
 
-            /* 
-             * @note An alternative method that works with ID (was only picking
-             * up one item in the item stack):
-             * // Purely for semantics of TileItemQuery.
-             * List<ETileItem> leti = new ArrayList<ETileItem>();
-             * leti.add(eti);
-             * TileItemQuery query = new TileItemQuery(leti);
-             * if (!query.withId(item.getId())
-             *           .withName(str)
-             *           .empty())
-             */
+            /* @note An alternative way with name-matching the loot string: */
+            // For name matching to string.
+            //ItemComposition comp = itemManager.getItemComposition(item.getId());
+            //String name = comp.getName();
+            //for (String str : lootHelper.getLootNames()) {
+            //    if (str.equals(name)) {
+            //        lootTile = tile.getLocalLocation();
+            //        lootQueue.add(eti);
+            //        if (!util.isWaiting(ticks)) // Don't want to re-wait!
+            //            util.shouldWait();
+            //    }
+            //}
         }
 	}
 
