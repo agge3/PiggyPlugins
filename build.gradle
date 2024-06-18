@@ -46,7 +46,6 @@ dependencies {
     implementation project(path: ':AutoTele')
     implementation project(path: ':CalvarionHelper')
     implementation project(path: ':E3T4G')
-    implementation project(path: ':EthansApi')
     implementation project(path: ':ChinBreakHandler')
     implementation project(path: ':GauntletFlicker')
     implementation project(path: ':Harpoon2Ticker')
@@ -57,7 +56,6 @@ dependencies {
     implementation project(path: ':LavaRunecrafter')
     implementation project(path: ':NightmareHelper')
     implementation project(path: ':OneTickSwitcher')
-    implementation project(path: ':PiggyUtils')
     implementation project(path: ':PowerSkiller')
     implementation project(path: ':PrayerFlicker')
     implementation project(path: ':PrayAgainstPlayer')
@@ -72,8 +70,10 @@ dependencies {
     implementation project(path: ':VardorvisHelper')
     implementation project(path: ':DropParty')
     implementation project(path: ':BetterProfiles')
-    implementation project(path: ':PathingTesting')
     implementation project(path: ':LeftClickBlackJack')
+    implementation project(path: ':EthansApi')
+    implementation project(path: ':PathingTesting')
+    implementation project(path: ':PiggyUtils')
     implementation project(path: ':AutoLoot')
     implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
 }
