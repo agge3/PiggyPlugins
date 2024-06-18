@@ -26,6 +26,7 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.lang.model.type.ArrayType;
@@ -33,6 +34,7 @@ import javax.sound.sampled.Line;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Optional;
+
 
 public class AutoLootOverlay extends OverlayPanel {
     @Override

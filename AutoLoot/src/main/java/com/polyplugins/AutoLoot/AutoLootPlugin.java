@@ -87,13 +87,13 @@ public class AutoLootPlugin extends Plugin {
     private AutoLootConfig getConfig(ConfigManager configManager) {
         return configManager.getConfig(AutoLootConfig.class);
     }
-
+  
     public Player player;
     public LocalPoint lootTile; 
     
     public IntPtr ticks;
     public Queue<ETileItem> lootQueue;
-    
+  
     public boolean started = false;
     public int timeout = 0;
     public int idleTicks = 0;
@@ -125,7 +125,7 @@ public class AutoLootPlugin extends Plugin {
         overlayManager.remove(tileOverlay);
 
         resetEverything();
-
+      
         // Clear the references.
         ticks = null;
         lootQueue = null;
@@ -143,7 +143,8 @@ public class AutoLootPlugin extends Plugin {
         util.reset();
 
         started = false;
-
+        timeout = 0;
+        idleTicks = 0;
         hasBones = false;
         looting = false;
     }
@@ -155,6 +156,7 @@ public class AutoLootPlugin extends Plugin {
             !started) {
             return;
         }
+
 
         // Will only wait if loot queue flags to wait. 
         if (util.isWaiting(ticks)); // Do nothing for now, catch the return. 
@@ -208,7 +210,6 @@ public class AutoLootPlugin extends Plugin {
         if (item.getOwnership() == OWNERSHIP_SELF) {
 		    final Tile tile = itemSpawned.getTile();
 		    ETileItem eti = new ETileItem(tile.getWorldLocation(), item);
-            
             for (String str : lootHelper.getLootNames()) {
                 TileItems.search()
                          .withId(item.getId())
@@ -217,23 +218,25 @@ public class AutoLootPlugin extends Plugin {
                 log.info("Added "  + str + " to loot queue!");
 
                     // Don't wait to re-wait!
-                    if (!util.isWaiting(ticks)) {
+                    if (!util.isWaiting(ticks))
                         util.shouldWait();
                 }
             }
 
-            /* @note An alternative way with name-matching the loot string: */
-            // For name matching to string.
-            //ItemComposition comp = itemManager.getItemComposition(item.getId());
-            //String name = comp.getName();
-            //for (String str : lootHelper.getLootNames()) {
-            //    if (str.equals(name)) {
-            //        lootTile = tile.getLocalLocation();
-            //        lootQueue.add(eti);
-            //        if (!util.isWaiting(ticks)) // Don't want to re-wait!
-            //            util.shouldWait();
-            //    }
-            //}
+            /* 
+             * @note An alternative way with name-matching the loot string:
+             * For name matching to string.
+             * ItemComposition comp = itemManager.getItemComposition(item.getId());
+             * String name = comp.getName();
+             * for (String str : lootHelper.getLootNames()) {
+             *    if (str.equals(name)) {
+             *        lootTile = tile.getLocalLocation();
+             *        lootQueue.add(eti);
+             *        if (!util.isWaiting(ticks)) // Don't want to re-wait!
+             *            util.shouldWait();
+             *    }
+             * }
+             */
         }
 	}
 

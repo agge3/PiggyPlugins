@@ -54,6 +54,7 @@ public class Util {
     public boolean isWaiting(IntPtr ticks) 
     {
         if (_flag) {
+
             // ticks++
             int tmp = ticks.get();
             tmp++;
