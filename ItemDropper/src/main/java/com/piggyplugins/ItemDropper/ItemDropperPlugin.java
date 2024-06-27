@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @PluginDescriptor(
 		name = "<html><font color=\"#FF9DF9\">[PP]</font> Item Dropper</html>",
 		description = "Automatically drops items on hotkey pressed or if the inventory is full",
-		tags = {"ethan", "piggy"}
+		tags = {"ethan", "piggy"},
+        enabledByDefault = false
 )
 public class ItemDropperPlugin extends Plugin {
 	@Inject private ItemDropperConfig config;

@@ -31,7 +31,8 @@ import java.util.*;
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> Power Skiller</html>",
         description = "Will interact with an object and drop or bank all items when inventory is full",
-        tags = {"ethan", "piggy", "skilling"}
+        tags = {"ethan", "piggy", "skilling"},
+        enabledByDefault = false
 )
 public class PowerSkillerPlugin extends Plugin {
     @Inject

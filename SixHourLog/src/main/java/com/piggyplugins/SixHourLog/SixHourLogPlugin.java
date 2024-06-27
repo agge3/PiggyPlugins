@@ -13,7 +13,8 @@ import java.util.concurrent.Executors;
 
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> NeverLog</html>",
-        description = "Enable this and you will never log out"
+        description = "Enable this and you will never log out",
+        enabledByDefault = false
 )
 public class SixHourLogPlugin extends Plugin {
     @Inject

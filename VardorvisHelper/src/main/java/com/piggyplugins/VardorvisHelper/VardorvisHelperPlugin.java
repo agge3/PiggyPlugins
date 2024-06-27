@@ -30,7 +30,8 @@ import java.util.List;
 @Slf4j
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> Vardorvis Helper</html>",
-        description = "Tells you what to pray against or auto prays at vardovis"
+        description = "Tells you what to pray against or auto prays at vardovis",
+        enabledByDefault = false
 )
 public class VardorvisHelperPlugin extends Plugin {
 

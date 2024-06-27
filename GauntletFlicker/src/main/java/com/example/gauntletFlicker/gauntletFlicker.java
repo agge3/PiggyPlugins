@@ -34,7 +34,8 @@ import java.util.Set;
 @PluginDescriptor(
         name = "<html><font color=\"#FF9DF9\">[PP]</font> Gauntlet Assist</html>",
         description = "Made by Ethan Vann, maintained by Piggy Plugins",
-        tags = {"ethan"}
+        tags = {"ethan"},
+        enabledByDefault = false
 )
 @Slf4j
 public class gauntletFlicker extends Plugin {

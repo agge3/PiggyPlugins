@@ -71,7 +71,9 @@ import static com.polyplugins.AutoRuneDragon.data.State.*;
 
 @PluginDescriptor(name = "<html><font color=\"#FF9DF9\">[PP]</font> Rune Dragons</html>",
         description = "AIO Rune dragons - Originally by marcojacobsNL, ported by PolyJ",
-        tags = {"koffee", "ethan"})
+        tags = {"koffee", "ethan"},
+        enabledByDefault = false
+)
 @Slf4j
 public class RuneDragonsPlugin extends Plugin {
     // Variables

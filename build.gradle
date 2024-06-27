@@ -75,8 +75,6 @@ dependencies {
     implementation project(path: ':BetterProfiles')
     implementation project(path: ':PathingTesting')
     implementation project(path: ':LeftClickBlackJack')
-    implementation project(path: ':AutoLoot')
-    implementation project(path: ':AutoQuester')
     implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
 }
 
